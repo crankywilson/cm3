@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include "uWebSockets.h"
+#include "messages.h"
+
 int port = 4567;
 
 using namespace uWS;
@@ -8,10 +10,6 @@ void Listening(us_listen_socket_t *param)
 {
   printf("Listening on port %d socket ptr %p\n", port, param);
 }
-
-struct Player
-{
-};
 
 typedef WebSocket<false, true, Player> PlayerWS;
 typedef std::string_view MsgData;
@@ -27,7 +25,32 @@ void NewConnection(PlayerWS *ws)
 
 void Recv(PlayerWS *ws, MsgData msg, OpCode opCode)
 {
-  printf("Received %d bytes\n", (int)msg.size());
+  const std::size_t intSize = sizeof(int);
+  std::size_t msgSize = msg.size();
+  if (msgSize < intSize)
+  {
+    printf("Received a message that was only %lu bytes\n", msgSize);
+    return;
+  }
+
+  const char *msgData = msg.data();
+  int msgID = *(int*)msgData;
+  if (msgID < 0 || msgID >= MAXMSGS)
+  {
+    printf("Received a message with ID %d (not in 0-%d)\n", msgID, (int)MAXMSGS);
+    return;
+  }
+
+  MsgMapEntry &e = (*(msgMap))[msgID];
+  if (e.recvFunc == nullptr)
+  {
+    printf("Received a message with ID %d which is undefined\n", msgID);
+    return;
+  }
+
+  msgData += intSize;
+  msgSize -= intSize;
+  e.recvFunc(MsgData(msgData, msgSize), GetPlayer(ws));
 }
 
 void ConnectionClosed(PlayerWS *ws, int, MsgData)
