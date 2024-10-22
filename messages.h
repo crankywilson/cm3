@@ -1,10 +1,10 @@
 #ifndef MESSAGES_H
-#define MESSAGE_H
+#define MESSAGES_H
 
 #include <json_struct.h>
 using namespace JS;
 
-#include "Player.h"
+struct Player;
 
 typedef std::string_view MsgData;
 typedef void (*MsgHandler)(MsgData, Player&);

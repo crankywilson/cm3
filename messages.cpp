@@ -1,8 +1,9 @@
 #define REGISTERMSGS 1
 #include "messages.h"
+#include "Player.h"
 #include <vector>
 
-MsgMapVec *msgMap;  // ( can't rely on order of init, so init in Register() )
+MsgMapVec *msgMap;  // ( can't rely on compiler order of init, so init in Register() )
 
 const int Register(const int id, MsgHandler mh, const char *className, bool json)
 {
@@ -30,11 +31,10 @@ const int Register(const int id, MsgHandler mh, const char *className, bool json
   return id;
 }
 
-#define JSMSG(Type, inst, data) Type inst; deserializeJS(inst, data);
-
 void Msg1::Recv(MsgData d, Player &p)
 {
-  JSMSG(Msg1, msg, d);
+  Msg1 msg;
+  deserializeJS(msg, d);
   
   if (msg.name == "Brian")
     printf("Hi\n");

@@ -1,17 +1,15 @@
 #include <stdio.h>
-#include "uWebSockets.h"
+
 #include "messages.h"
+#include "Player.h"
 
 int port = 4567;
-
-using namespace uWS;
 
 void Listening(us_listen_socket_t *param)
 {
   printf("Listening on port %d socket ptr %p\n", port, param);
 }
 
-typedef WebSocket<false, true, Player> PlayerWS;
 typedef std::string_view MsgData;
 
 inline Player& GetPlayer(PlayerWS *ws) { return *(ws->getUserData()); }
@@ -41,7 +39,7 @@ void Recv(PlayerWS *ws, MsgData msg, OpCode opCode)
     return;
   }
 
-  MsgMapEntry &e = (*(msgMap))[msgID];
+  const MsgMapEntry &e = (*(msgMap))[msgID];
   if (e.recvFunc == nullptr)
   {
     printf("Received a message with ID %d which is undefined\n", msgID);
@@ -72,6 +70,8 @@ void RunWSServer(int portParam)
   app.listen(port, Listening);
   app.run();
 }
+
+std::string msgBuf;
 
 int main(int argc, char* argv[])
 {
