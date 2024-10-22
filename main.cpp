@@ -2,8 +2,12 @@
 
 #include "messages.h"
 #include "Player.h"
+#include "Game.h"
 
 int port = 4567;
+
+using namespace std;
+vector<Game> games;
 
 void Listening(us_listen_socket_t *param)
 {
@@ -12,13 +16,16 @@ void Listening(us_listen_socket_t *param)
 
 typedef std::string_view MsgData;
 
-inline Player& GetPlayer(PlayerWS *ws) { return *(ws->getUserData()); }
-
 void NewConnection(PlayerWS *ws)
 {
-  Player& p = GetPlayer(ws);
-  printf("New connection\n");
-  ws->send("OK, connected");
+  std::string ip(ws->getRemoteAddress());
+  printf("New connection from '%s'\n", ip.c_str());
+
+  // we'll only support one game for now
+  if (games.size() == 0)
+    games.push_back(Game());
+  
+  games[0].NewConnection(*(ws->getUserData()), ws, ip);
 }
 
 void Recv(PlayerWS *ws, MsgData msg, OpCode opCode)
@@ -48,12 +55,14 @@ void Recv(PlayerWS *ws, MsgData msg, OpCode opCode)
 
   msgData += intSize;
   msgSize -= intSize;
-  e.recvFunc(MsgData(msgData, msgSize), GetPlayer(ws));
+  e.recvFunc(MsgData(msgData, msgSize), *(ws->getUserData()));
 }
 
 void ConnectionClosed(PlayerWS *ws, int, MsgData)
 {
-  printf("Connection closed\n");
+  Player &p = *(ws->getUserData());
+  printf("Connection closed %d\n", p.color);
+  p.g->Disconnect(p);
 }
 
 void RunWSServer(int portParam)

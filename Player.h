@@ -37,13 +37,16 @@ void SendMsg(Msg msg, PlayerWS& ws)
     printf("Unknown msg ID of %d passed to SendMsg\n", msgID);
     return;
   }
-
+  
   if (e.json)
   {
     serializeJS(msg, msgBuf);
+    ws.send(msgBuf, TEXT);
   }
-
-  ws.send(msgBuf);
+  else
+  {
+    ws.send(MsgData((char*)&msg, sizeof(Msg)));
+  }
 }
 
 struct Game;
@@ -53,6 +56,7 @@ struct Player
   enum Color       color;
   bool             active = false;
   std::string      name   = "";
+  std::string      ip     = "";
   bool             starter;
   int              money  = 1000;
   std::vector<int> res    = { 5, 2, 0, 0, 0 };
@@ -68,6 +72,9 @@ struct Player
 
   template<class T> 
   void             send(T msg) { SendMsg(msg, *ws); }
+
+  Player();
+  Player(enum Color c) : Player() { color = c; }
 
 };
 

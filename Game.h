@@ -38,10 +38,10 @@ struct LandLot
 
 struct Game
 {
-  std::vector<LandLot> landlots   = std::vector<LandLot>((size_t)2);
+  std::vector<LandLot> landlots   = std::vector<LandLot>((size_t)9*5);
   int                  month      = 1;
   std::string          name       = "(Unnamed)";
-  std::vector<Player>  players;
+  std::vector<Player*> players;
   Player               colony     = { C };
   GameState            state      = SSetup;
   int                  mules      = 14;
@@ -50,6 +50,19 @@ struct Game
 
   JS_OBJ(landlots, month, name, players, colony, state, mules,
           mulePrice, resPrice);
+
+  Game();
+  void NewConnection(Player &p, PlayerWS* ws, const std::string &ip);
+  void Disconnect(Player &p);
+  void Start();
+  
+  Player* player(enum Color c)
+  {
+    for (Player* p : players)
+      if (p->color == c) return p;
+
+    return nullptr;
+  }
 
   LandLot& landlot(int e, int n) { return landlots[(9 * (n+2)) + e + 4]; }
 };
