@@ -3,14 +3,17 @@
 #include "BasicTypes.h"
 struct Player;
 
-#ifdef REGISTERMSGS  // this only gets instantiated in messages_reg.cpp
-#include "messages_reg.h"
+template<class T> struct BinMsg { int _msgID; BinMsg():_msgID(T::msgID) {} };
+
+// REGISTERMSGS only gets instantiated in messages_reg.cpp
+// where global are definied to initialize the messages
+#ifdef REGISTERMSGS  
+ #include "messages_reg.h"
 #else
-#define JS_REG(CLASS, id)  void Recv(Player&);
-#define BIN_REG(CLASS, id) void Recv(Player&);
+ #define JS_REG(CLASS, id)  void Recv(Player&);
+ #define BIN_REG(CLASS, id) void Recv(Player&); static const int msgID;
 #endif
 
-#define BIN_MSGID(CLASS) static const int msgID; const int _msgID = CLASS::msgID
 
 struct Msg1 
 {
@@ -22,10 +25,11 @@ struct Msg1
  JS_REG(Msg1, 1)
 }; 
 
-struct Msg2 
+struct Msg2 : BinMsg<Msg2>
 {
- BIN_MSGID(Msg2);  // this has to come first for bin msgs (id field)
+  int i2;
   float x;
   float z;
+
  BIN_REG(Msg2, 2)
 }; 

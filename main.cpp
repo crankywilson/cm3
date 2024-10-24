@@ -1,13 +1,15 @@
 #include "BasicTypes.h"
 int port = 4567;
 
-#include "messages.h"
-
 int main(int argc, char* argv[])
 {
+  printf("Run as: ");
+  for (int i=0; i<argc; i++)
+    printf("'%s' ", argv[i]);
+  printf("\n");
+
   PopulateMsgs();
   
-  //printf("params %d %s\n", argc, argv[0]);
   RunWSServer(port);
   return 0;
 }

@@ -5,7 +5,7 @@ struct Game;
 
 struct Player
 {
-  enum Color  color;
+  Color       color;
   bool        active = false;
   string      name   = "";
   string      ip     = "";

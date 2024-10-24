@@ -32,6 +32,7 @@ void RecvBinTempl(WebSock *ws, const MsgData sv)
 const int CLASS::msgID = { Register(id, RecvJSTempl<CLASS>, #CLASS, true)
 
 #define BIN_REG(CLASS, id) \
+  static const int msgID; \
   void Recv(Player&); \
 }; \
 const int CLASS::msgID = { Register(id, RecvBinTempl<CLASS>, #CLASS, false, sizeof(CLASS))

@@ -62,7 +62,7 @@ vector<Game> games;
 
 void Listening(us_listen_socket_t *param)
 {
-  printf("Listening on port %d socket ptr %p\n", runningPort, param);
+  printf("Socket ptr %p listening on port %d \n", param, runningPort);
 }
 
 void NewConnection(WebSock *ws)
