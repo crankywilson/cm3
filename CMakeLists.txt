@@ -4,6 +4,7 @@ project(cmul VERSION 0.1.0 LANGUAGES C CXX)
 add_executable(cmul 
  main.cpp
  messages.cpp
+ messages_reg.cpp
  Game.cpp
  Player.cpp
 )

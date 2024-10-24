@@ -1,78 +1,132 @@
 #include "Game.h"
-#include <map>
-
-using namespace std;
-
-// since the Player is allocated by the WebSocket,
-// if the connection goes bad, we need to allocate a new object
-// here and update the reference in players vector
-map<string, Player> disconnectedPlayers;
+#include "uWebSockets.h"
 
 Game::Game()
 {
 }
 
-bool HandleReconnect(Game &g, Player &p, PlayerWS* ws, const string &ip)
-{
-  if (disconnectedPlayers.find(ip) != disconnectedPlayers.end())
-  {
-    // do reconnect stuff, send msgs
-    disconnectedPlayers.erase(ip);
-    return true;
-  }
-
-  return false;
-}
-
 void Game::Disconnect(Player &p)
 {
   p.ws = nullptr;
-  Player &newPlayerRef = disconnectedPlayers[p.ip];
-
-  // copy player data to new ref in map
-  newPlayerRef = p;
-
-  // now update Game player pointer, since the existing
-  // one belonged to the websocket which is going away...
-  for (int i=0; i<4; i++)
-  {
-    if (players[i]->color == p.color)
-    {
-      players[i] = &newPlayerRef;
-      break;
-    }
-  }
+  // send disconnect msg to other players?
 }
 
-void Game::NewConnection(Player &p, PlayerWS* ws, const string &ip)
+void Game::NewConnection(PlayerRef &pr, WebSock* ws, const string &ip)
 {
-  if (HandleReconnect(*this, p, ws, ip))
-    return;
-
-  if (state != SSetup)
+  if (state == SSetup)
   {
+    if (players.size() >= 4)
+    {
+      printf("Can't handle connection to game with >= 4 players\n");
+      return;
+    }
+
+    Player p;
+    p.starter = players.size() == 0;
+    p.ip = ip;
+    p.ws = ws;
+    for (Color c=R; c<=B; c=(Color)((int)c+1))
+    {
+      p.color = c;
+      if (&(player(c)) == &(p.g->colony)) break;
+    }
+    players.push_back(p);
+    pr.player = &player(p.color);
+    // send gamestate msg?
+  }
+  else // active game rejoin?
+  {
+    for (Player &p : players)
+    {
+      if (p.ws == nullptr && p.ip == ip)
+      {
+        p.ws = ws;
+        pr.player = &p;
+         // send gamestate msg?
+        return;
+      }
+    }
+
     printf("Can't handle unknown connection to active game\n");
     return;
   }
-
-  if (players.size() >= 4)
-  {
-    printf("Can't handle connection to game with >= 4 players\n");
-    return;
-  }
-
-  p.starter = players.size() == 0;
-  p.ip = ip;
-  p.ws = ws;
-  for (enum Color c=R; c<=B; c=(Color)((int)c+1))
-  {
-    p.color = c;
-    if (player(c) == nullptr) break;
-  }
-
-  players.push_back(&p);
 }
 
 void Game::Start()
 {
+}
+
+int runningPort = -1;
+
+vector<Game> games;
+
+void Listening(us_listen_socket_t *param)
+{
+  printf("Listening on port %d socket ptr %p\n", runningPort, param);
+}
+
+void NewConnection(WebSock *ws)
+{
+  string ip(ws->getRemoteAddress());
+  printf("New connection from '%s'\n", ip.c_str());
+
+  // we'll only support one game for now
+  if (games.size() == 0)
+    games.push_back(Game());
+  
+  games[0].NewConnection(*(ws->getUserData()), ws, ip);
+}
+
+using namespace uWS;
+
+void Recv(WebSock *ws, MsgData msg, OpCode opCode)
+{
+  const std::size_t intSize = sizeof(int);
+  std::size_t msgSize = msg.size();
+  if (msgSize < intSize)
+  {
+    printf("Received a message that was only %lu bytes\n", msgSize);
+    return;
+  }
+
+  const char *msgData = msg.data();
+  int msgID = *(int*)msgData;
+  if (msgID < 0 || msgID >= msgs.size())
+  {
+    printf("Received a message with ID %d (must be < %d)\n", msgID, (int)msgs.size());
+    return;
+  }
+
+  const MsgMapData &e = msgs[msgID];
+  if (e.recvFunc == nullptr)
+  {
+    printf("Received a message with ID %d which is undefined\n", msgID);
+    return;
+  }
+
+  msgData += intSize;
+  msgSize -= intSize;
+  e.recvFunc(ws, MsgData(msgData, msgSize));
+}
+
+void ConnectionClosed(WebSock *ws, int, MsgData)
+{
+  Player &p = *((ws->getUserData())->player);
+  printf("Connection closed %d\n", p.color);
+  p.g->Disconnect(p);
+}
+
+void RunWSServer(int port)
+{
+  App app;
+  runningPort = port;
+  app.ws<PlayerRef>("/*", 
+   {
+    .open = NewConnection,
+    .message = Recv,
+    .close = ConnectionClosed
+   }
+  );
+  app.listen(port, Listening);
+  app.run();
 }

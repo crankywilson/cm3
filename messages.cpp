@@ -1,45 +1,67 @@
-#define REGISTERMSGS 1
 #include "messages.h"
-#include "Player.h"
+
+#include "Game.h"
 #include <vector>
 
-MsgMapVec *msgMap;  // ( can't rely on compiler order of init, so init in Register() )
 
-const int Register(const int id, MsgHandler mh, const char *className, bool json)
-{
-  static MsgMapVec map(MAXMSGS);
 
-  msgMap = &map;
-
-  if (id < 0 || id >= MAXMSGS)
-  {
-    printf("ID %d is out of range for type '%s'\n", id, className);
-    exit(1);
-  }
-
-  if (map[id].className != "")
-  {
-    printf("ID %d is cannot be used for type '%s' as it is used for '%s'\n", id, className, map[id].className.c_str());
-    exit(1);
-  }
-
-  map[id].className = className;
-  map[id].recvFunc = mh;
-  map[id].json = json;
-
-  printf("Registerred %s as %d\n", className, id);
-  return id;
-}
-
-void Msg1::Recv(MsgData d, Player &p)
-{
-  Msg1 msg;
-  deserializeJS(msg, d);
-  
-  if (msg.name == "Brian")
-    printf("Hi\n");
-}
-
-void Msg2::Recv(MsgData d, Player &p)
+void Msg1::Recv(Player &p)
 {
 }
+
+void Msg2::Recv(Player &p)
+{
+}
+
+
+
+
+
+/*
+struct Msg3
+{
+  int a;
+  int b;
+
+  void Recv(Player &p);
+
+  JS_OBJ(a,b);
+};
+
+template <class T>
+void Recv (WebSock *ws, const MsgData sv)
+{
+  T msg;
+  JS::ParseContext context(sv.data(), sv.size());
+  (void) context.parseTo(msg);
+  Player p;
+  msg.Recv(p);
+}
+
+template <class T>
+void RecvBin (WebSock *ws, const MsgData sv)
+{
+   Player p;
+  (*(T*)(sv.data())).Recv(p);
+}
+
+void Msg3::Recv(Player& p)
+{
+  printf("a = %d, b = %d\n", a, b);
+}
+
+
+void dotest()
+{
+  Msg3 m3;
+  m3.a=9;
+  m3.b=15;
+  auto js = JS::serializeStruct(m3);
+  printf("%s\n", js.c_str());
+  m3.a = 21;
+  MsgData md((const char *)&m3, sizeof(Msg3));
+  Recv<Msg3>(nullptr, js);
+  RecvBin<Msg3>(nullptr, md);
+}
+
+*/
