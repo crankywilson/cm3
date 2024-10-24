@@ -104,9 +104,7 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
     return;
   }
 
-  msgData += intSize;
-  msgSize -= intSize;
-  e.recvFunc(ws, MsgData(msgData, msgSize));
+  e.recvFunc(ws, msg);
 }
 
 void ConnectionClosed(WebSock *ws, int, MsgData)

@@ -14,6 +14,14 @@ void RecvJSTempl(WebSock *ws, const MsgData sv)
 template <class T>
 void RecvBinTempl(WebSock *ws, const MsgData sv)
 {
+  // might make sense to check the size here
+  if (sv.size() != sizeof(T))
+  {
+    printf("Received a message of size %d when expecting %d for ID %d\n",
+      (int)sv.size(), (int)sizeof(T), T::msgID);
+    return;
+  }
+
   (*(T*)(sv.data())).Recv(*(ws->getUserData()->player));
 }
 

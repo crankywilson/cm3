@@ -46,5 +46,6 @@ int Register(int id, RecvFunc fn, const char *className, bool json, int size)
 
 void PopulateMsgs()
 {
+  printf("All globals initialized, populating msgs vector\n");
   msgs = *preInitMsgs;
 }
