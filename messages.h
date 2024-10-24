@@ -3,15 +3,18 @@
 #include "BasicTypes.h"
 struct Player;
 
-template<class T> struct BinMsg { int _msgID; BinMsg():_msgID(T::msgID) {} };
+struct BinBase {};
+template<class T> struct BinMsg : BinBase { int _msgID; BinMsg():_msgID(T::msgID) {} };
 
-// REGISTERMSGS only gets instantiated in messages_reg.cpp
-// where global are definied to initialize the messages
+// REGISTERMSGS only gets defined in messages_reg.cpp.
+// The following macros are defined such that globals are generated
+// only in that file whose initailizations cause the message types to
+// get registerred to the 'msgs' vector.
 #ifdef REGISTERMSGS  
  #include "messages_reg.h"
 #else
  #define JS_REG(CLASS, id)  void Recv(Player&);
- #define BIN_REG(CLASS, id) void Recv(Player&); static const int msgID;
+ #define BIN_REG(CLASS, id) void Recv(Player&); static const int msgID; JS_OBJ(_msgID);
 #endif
 
 

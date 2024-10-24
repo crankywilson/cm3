@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BasicTypes.h"
+#include "messages_send.h"
 struct Game;
 
 struct Player
@@ -23,7 +24,7 @@ struct Player
   WebSock*         ws;
 
   template<class T> 
-  void             send(T msg) { SendMsg(msg, *ws); }
+  void send(T msg) { Send(*ws, msg); }
 
   Player();
   Player(enum Color c) : Player() { color = c; }

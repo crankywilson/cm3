@@ -58,12 +58,15 @@ struct MsgMapData
 {
   RecvFunc recvFunc = nullptr;
   string className;
-  bool json;
+  bool json = false;
   int msgSize = -1;
 };
 
 extern vector<MsgMapData> msgs;
 void PopulateMsgs();
+
+extern JS::SerializerContext jsSendContext;
+extern string jsSendContextBacking;
 
 void RunWSServer(int port);
 

@@ -3,6 +3,9 @@
 #include "BasicTypes.h"
 #include "Player.h"  // game depends on player, but not other way around
 
+extern Player NoPlayer;
+inline bool Exists(Player &p) { return &p != &NoPlayer; }
+
 struct Game
 {
   vector<LandLot> landlots   = vector<LandLot>((size_t)9*5);
@@ -28,7 +31,7 @@ struct Game
     for (Player& p : players)
       if (p.color == c) return p;
 
-    return colony;
+    return NoPlayer;
   }
 
   LandLot& landlot(int e, int n) { return landlots[(9 * (n+2)) + e + 4]; }

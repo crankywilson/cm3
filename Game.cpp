@@ -1,5 +1,8 @@
 #include "Game.h"
 #include "uWebSockets.h"
+using namespace JS;
+
+Player NoPlayer;
 
 Game::Game()
 {
@@ -28,7 +31,7 @@ void Game::NewConnection(PlayerRef &pr, WebSock* ws, const string &ip)
     for (Color c=R; c<=B; c=(Color)((int)c+1))
     {
       p.color = c;
-      if (&(player(c)) == &(p.g->colony)) break;
+      if (!Exists(player(c))) break;
     }
     players.push_back(p);
     pr.player = &player(p.color);
