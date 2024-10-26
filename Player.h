@@ -24,7 +24,7 @@ struct Player
   WebSock*         ws;
 
   template<class T> 
-  void send(T msg) { Send(*ws, msg); }
+  void send(const T& msg) { Send(*ws, msg); }
 
   Player();
   Player(enum Color c) : Player() { color = c; }

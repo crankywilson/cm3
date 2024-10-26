@@ -5,7 +5,7 @@
 #include <type_traits>
 
 template<class T>
-void Send(WebSock& ws, T msg)
+void Send(WebSock& ws, const T& msg)
 {
   using namespace JS;
   int msgID = T::msgID;
