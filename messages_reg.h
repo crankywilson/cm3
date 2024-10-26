@@ -37,4 +37,16 @@ const int CLASS::msgID = { Register(id, RecvJSTempl<CLASS>, #CLASS, true)
 }; \
 const int CLASS::msgID = { Register(id, RecvBinTempl<CLASS>, #CLASS, false, sizeof(CLASS))
 
+#define JS_REG_NORECV(CLASS, id) \
+  static const int msgID; \
+  void Recv(Player&) {} \
+}; \
+const int CLASS::msgID = { Register(id, RecvJSTempl<CLASS>, #CLASS, true)
+
+#define BIN_REG_NORECV(CLASS, id) \
+  static const int msgID; \
+  void Recv(Player&) {} \
+}; \
+const int CLASS::msgID = { Register(id, RecvBinTempl<CLASS>, #CLASS, false, sizeof(CLASS))
+
 

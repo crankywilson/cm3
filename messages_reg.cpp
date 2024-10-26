@@ -42,7 +42,7 @@ int Register(int id, RecvFunc fn, const char *className, bool json, int size)
   entry.msgSize = size;
   entry.recvFunc = fn;
 
-  printf("Registerred '%s' as ID %d\n", className, id);
+  printf("Registerred %s '%s' as ID %d\n", json ? "JSMsg " : "BinMsg", className, id);
 
   return id;
 }

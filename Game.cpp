@@ -70,7 +70,7 @@ void Listening(us_listen_socket_t *param)
 
 void NewConnection(WebSock *ws)
 {
-  string ip(ws->getRemoteAddress());
+  string ip(ws->getRemoteAddressAsText());
   printf("New connection from '%s'\n", ip.c_str());
 
   // we'll only support one game for now
@@ -103,7 +103,7 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
   const MsgMapData &e = msgs[msgID];
   if (e.recvFunc == nullptr)
   {
-    printf("Received a message with ID %d which is undefined\n", msgID);
+    printf("Received a message with ID %d '%s' that has no registerred recv\n", msgID, e.className.c_str());
     return;
   }
 

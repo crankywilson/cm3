@@ -4,10 +4,10 @@
 
 void Msg1::Recv(Player &p)
 {
-  p.send(Msg2());
+  p.send(Msg4());
 }
 
-void Msg2::Recv(Player &p)
+void Msg4::Recv(Player &p)
 {
 }
 
