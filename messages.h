@@ -29,21 +29,31 @@ inline void NR(int msgID)
 
 #define List vector
 
-class Msg1 : JSMsg<Msg1>, BiDir
-{ 
-  public: string    name;
-  public: string    address;
-  public: List<int> ages;
-
- JS_OBJ(name, address, ages);
- JS_REG(Msg1, 1)
+                    
+struct JoinGameReq : JSMsg<JoinGameReq>, CliToServ 
+{
+  string gameName;
+  
+ JS_OBJ(gameName);
+ JS_REG(JoinGameReq, 1)
 };
 
-struct Msg4 : BinMsg<Msg4>, BiDir               
+
+struct CurrentPlayers : JSMsg<CurrentPlayers>, ServToCli 
+{
+  List<Player> players;
+  int yourColor;
+
+ JS_OBJ(players, yourColor);
+ JS_REG_NORECV(CurrentPlayers, 2)
+};
+
+
+struct BinExample : BinMsg<BinExample>, ServToCli               
 {
   int ifield;
   float x;
   float z;
 
- BIN_REG(Msg4, 4)
+ BIN_REG_NORECV(BinExample, 255)
 }; 

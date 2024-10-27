@@ -25,6 +25,35 @@ typedef void (*RecvFunc)(WebSock *, const MsgData);
 
 enum Color { R, Y, G, B, C, N };
 
+std::string ColorName(Color c);
+
+
+namespace JS {
+template<>
+struct TypeHandler<Color>
+{
+  public:
+    static inline Error to(Color &to_type, ParseContext &context)
+    {
+        char *pointer;
+        unsigned long value = strtoul(context.token.value.data, &pointer, 10);
+        to_type = (Color)(value);
+        if (context.token.value.data == pointer)
+            return Error::FailedToParseInt;
+        return Error::NoError;
+    }
+
+    static void from(const Color &from_type, Token &token, Serializer &serializer)
+    {
+        std::string buf = std::to_string(from_type);
+        token.value_type = Type::Number;
+        token.value.data = buf.data();
+        token.value.size = buf.size();
+        serializer.write(token);
+    }
+  };
+}
+
 enum GameState
 {
   SSetup,

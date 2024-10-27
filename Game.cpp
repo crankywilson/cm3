@@ -4,6 +4,17 @@ using namespace JS;
 
 Player NoPlayer;
 
+std::string ColorName(Color c)
+{
+  switch (c) {
+    case R: return "Red";
+    case Y: return "Yellow";
+    case G: return "Green";
+    case B: return "Blue";
+  }
+  return "?";
+}
+
 Game::Game()
 {
 }

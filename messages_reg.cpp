@@ -1,4 +1,5 @@
 #define REGISTERMSGS 1
+#include "Game.h"
 
 #include <uWebSockets.h>
 using namespace uWS;
