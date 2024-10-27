@@ -15,6 +15,8 @@ std::string ColorName(Color c)
   return "?";
 }
 
+Game& GetGame(Player *p) { return *(p->g); }
+
 Game::Game()
 {
 }

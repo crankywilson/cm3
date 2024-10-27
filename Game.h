@@ -34,5 +34,13 @@ struct Game
     return NoPlayer;
   }
 
+  template<class T> 
+  void send(const T& msg) 
+  { 
+    for (Player& p : players)
+      if (p.ws != nullptr)
+        Send(*(p.ws), msg); 
+  }
+
   LandLot& landlot(int e, int n) { return landlots[(9 * (n+2)) + e + 4]; }
 };

@@ -2,6 +2,7 @@
 
 #include "BasicTypes.h"
 struct Player;
+struct Game;
 
 template<class T> struct BinMsg { int _msgID; BinMsg():_msgID(T::msgID) {} };
 template<class T> struct JSMsg {};
@@ -21,10 +22,10 @@ inline void NR(int msgID)
 #ifdef REGISTERMSGS  
  #include "messages_reg.h"
 #else
- #define JS_REG(CLASS, id)  void Recv(Player&);
- #define BIN_REG(CLASS, id) void Recv(Player&); static const int msgID; JS_OBJ(_msgID);
- #define JS_REG_NORECV(CLASS, id)  void Recv(Player&) {}
- #define BIN_REG_NORECV(CLASS, id) void Recv(Player&) {} static const int msgID; JS_OBJ(_msgID);
+ #define JS_REG(CLASS, id)  void Recv(Player&, Game&); static const int msgID;
+ #define BIN_REG(CLASS, id) void Recv(Player&, Game&); static const int msgID; JS_OBJ(_msgID);
+ #define JS_REG_NORECV(CLASS, id)  void Recv(Player&, Game&) {} static const int msgID;
+ #define BIN_REG_NORECV(CLASS, id) void Recv(Player&, Game&) {} static const int msgID; JS_OBJ(_msgID);
 #endif
 
 #define List vector
