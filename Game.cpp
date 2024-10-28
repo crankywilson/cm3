@@ -4,7 +4,7 @@ using namespace JS;
 
 Player NoPlayer;
 
-std::string ColorName(Color c)
+const char* ColorName(Color c)
 {
   switch (c) {
     case R: return "Red";
@@ -19,6 +19,7 @@ Game& GetGame(Player *p) { return *(p->g); }
 
 Game::Game()
 {
+  jsSendContext.serializer.setOptions(SerializerOptions::Compact);
 }
 
 void Game::Disconnect(Player &p)
@@ -41,13 +42,13 @@ void Game::NewConnection(PlayerRef &pr, WebSock* ws, const string &ip)
     p.starter = players.size() == 0;
     p.ip = ip;
     p.ws = ws;
-    for (Color c=R; c<=B; c=(Color)((int)c+1))
-    {
-      p.color = c;
-      if (!Exists(player(c))) break;
-    }
+    p.g = this;
+    p.color = N;  // gets assigned in NewPlayerReq::Recv
     players.push_back(p);
-    pr.player = &player(p.color);
+    pr.player = &player(p.color);  
+    // now the player pointer in WebSock references
+    // the same player object in the game players vector
+
     // send gamestate msg?
   }
   else // active game rejoin?
@@ -120,6 +121,9 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
     return;
   }
 
+  printf(" -> Recv from %c: %s\n", ColorName(ws->getUserData()->player->color)[0], e.className.c_str());
+  ((char*)msgData)[msgSize] = 0;
+  printf("%s\n", msgData + 4);
   e.recvFunc(ws, msg);
 }
 

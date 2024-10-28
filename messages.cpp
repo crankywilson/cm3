@@ -14,9 +14,7 @@ void JoinGameReq::Recv(Player &p, Game &g)
   for (Player other : g.players)
     remove(avail, other.color);
   p.color = avail[0];
-  p.name = "(" + ColorName((Color)p.color) + ")";
-  g.players.push_back(p);
-  
+  p.name = string("(") + ColorName((Color)p.color) + string(")");  
   g.send(CurrentPlayers { players:g.players, yourColor:p.color });
 }
 

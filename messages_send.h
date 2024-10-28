@@ -9,6 +9,7 @@ void Send(WebSock& ws, const T& msg)
 {
   using namespace JS;
   int msgID = T::msgID;
+
   if (msgID < 0 || msgID >= msgs.size())
   {
     printf("Trying to send unknown message ID %d (must be < %d)\n", msgID, (int)msgs.size());
@@ -22,16 +23,21 @@ void Send(WebSock& ws, const T& msg)
     return;
   }
 
+  printf(" -> Send to   %c: %s\n", ColorName(ws.getUserData()->player)[0], e.className.c_str());
+
   if (e.json)
   {
-    jsSendContextBacking.clear();
     Token token;
     TypeHandler<T>::from(msg, token, jsSendContext.serializer);
     jsSendContext.flush();
-    (void) ws.send(
-      std::string_view((const char*)&msgID, sizeof(int)), 
-      uWS::BINARY, false, false);
-    (void) ws.send(jsSendContextBacking);
+
+    string msgWithID = "    " + jsSendContextBacking;
+    *(int*)(&(msgWithID[0])) = msgID;
+
+    (void) ws.send(msgWithID);
+  
+    printf("%s\n", jsSendContextBacking.c_str());
+
   }
   else
   {

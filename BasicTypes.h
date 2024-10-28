@@ -25,8 +25,8 @@ typedef void (*RecvFunc)(WebSock *, const MsgData);
 
 enum Color { R, Y, G, B, C, N };
 
-std::string ColorName(Color c);
-
+const char* ColorName(Color c);
+const char* ColorName(Player *p);
 
 namespace JS {
 template<>
