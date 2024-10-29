@@ -17,7 +17,7 @@ void Send(WebSock& ws, const T& msg)
   }
 
   const MsgMapData &e = msgs[msgID];
-  if (e.recvFunc == nullptr)
+  if (e.className == "")
   {
     LOG("Trying to send unregisterred message ID %d\n", msgID);
     return;
@@ -32,9 +32,13 @@ void Send(WebSock& ws, const T& msg)
     TypeHandler<T>::from(msg, token, jsSendContext.serializer);
     jsSendContext.flush();
 
-    (void) ws.send(jsSendContextBacking);
+    const char *msgPtr = jsSendContextBacking.c_str();
+    const char *json = msgPtr + sizeof(int);
+
+    string_view msg(msgPtr, strlen(json) + sizeof(int));
+    (void) ws.send(msg);
   
-    LOGJSON("%s\n", jsSendContextBacking.c_str() + sizeof(int));
+    LOGJSON("%s\n", json);
   }
   else
   {

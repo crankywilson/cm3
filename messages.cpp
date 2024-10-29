@@ -66,6 +66,7 @@ void NameFinalized::Recv(Player &p, Game &g)
 
 void StartGame::Recv(Player &p, Game &g)
 {
+  g.send(StartGame());
   g.Start();
 }
 
