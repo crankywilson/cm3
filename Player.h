@@ -29,4 +29,12 @@ struct Player
   Player();
   Player(enum Color c) : Player() { color = c; }
 
+  bool buying;
+  int currentBid;
+  int plEvent;
+  int used[4];
+  int spoiled[4];
+  int startingRes[4];
+  int produced[4];
+  bool energyShort;
 };

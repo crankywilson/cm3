@@ -19,7 +19,7 @@ void RecvBinTempl(WebSock *ws, const MsgData sv)
   // might make sense to check the size here
   if (sv.size() != sizeof(T))
   {
-    printf("Received a message of size %d when expecting %d for ID %d\n",
+    LOG("Received a message of size %d when expecting %d for ID %d\n",
       (int)sv.size(), (int)sizeof(T), T::msgID);
     return;
   }
@@ -44,12 +44,12 @@ const int CLASS::msgID = { Register(id, RecvBinTempl<CLASS>, #CLASS, false, size
   static const int msgID; \
   void Recv(Player&, Game&) {} \
 }; \
-const int CLASS::msgID = { Register(id, RecvJSTempl<CLASS>, #CLASS, true)
+const int CLASS::msgID = { Register(id, nullptr, #CLASS, true)
 
 #define BIN_REG_NORECV(CLASS, id) \
   static const int msgID; \
   void Recv(Player&, Game&) {} \
 }; \
-const int CLASS::msgID = { Register(id, RecvBinTempl<CLASS>, #CLASS, false, sizeof(CLASS))
+const int CLASS::msgID = { Register(id, nullptr, #CLASS, false, sizeof(CLASS))
 
 

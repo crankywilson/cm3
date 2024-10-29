@@ -12,32 +12,29 @@ void Send(WebSock& ws, const T& msg)
 
   if (msgID < 0 || msgID >= msgs.size())
   {
-    printf("Trying to send unknown message ID %d (must be < %d)\n", msgID, (int)msgs.size());
+    LOG("Trying to send unknown message ID %d (must be < %d)\n", msgID, (int)msgs.size());
     return;
   }
 
   const MsgMapData &e = msgs[msgID];
   if (e.recvFunc == nullptr)
   {
-    printf("Trying to send unregisterred message ID %d\n", msgID);
+    LOG("Trying to send unregisterred message ID %d\n", msgID);
     return;
   }
 
-  printf(" -> Send to   %c: %s\n", ColorName(ws.getUserData()->player)[0], e.className.c_str());
+  LOGMSG(msgID)(" <- Send to   %c: %s\n", ColorName(ws.getUserData()->player)[0], e.className.c_str());
 
   if (e.json)
   {
     Token token;
+    jsSendContext.serializer.write((char*)&msgID, sizeof(int));
     TypeHandler<T>::from(msg, token, jsSendContext.serializer);
     jsSendContext.flush();
 
-    string msgWithID = "    " + jsSendContextBacking;
-    *(int*)(&(msgWithID[0])) = msgID;
-
-    (void) ws.send(msgWithID);
+    (void) ws.send(jsSendContextBacking);
   
-    printf("%s\n", jsSendContextBacking.c_str());
-
+    LOGJSON("%s\n", jsSendContextBacking.c_str() + sizeof(int));
   }
   else
   {

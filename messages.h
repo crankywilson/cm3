@@ -12,7 +12,7 @@ struct BiDir     {};
 
 inline void NR(int msgID)
 {
-  printf("Got unexpected msg ID #%d which has no Recv implemented", msgID);
+  LOG("Got unexpected msg ID #%d which has no Recv implemented", msgID);
 }
 
 // REGISTERMSGS only gets defined in messages_reg.cpp.
@@ -48,13 +48,78 @@ struct CurrentPlayers : JSMsg<CurrentPlayers>, ServToCli
  JS_OBJ(players, yourColor);
  JS_REG_NORECV(CurrentPlayers, 2)
 };
-
-
-struct BinExample : BinMsg<BinExample>, ServToCli               
+                 
+struct NameUpdate : JSMsg<NameUpdate>, CliToServ                  
 {
-  int ifield;
-  float x;
-  float z;
+  string name;
 
- BIN_REG_NORECV(BinExample, 255)
-}; 
+ BIN_REG(NameUpdate, 3)
+};
+
+struct ChangeColorReq : BinMsg<ChangeColorReq>, CliToServ
+{
+ BIN_REG(ChangeColorReq, 4)
+};
+
+struct NameFinalized : BinMsg<NameFinalized>, CliToServ
+{
+ BIN_REG(NameFinalized, 5)
+};
+
+struct StartGame : BinMsg<StartGame>, BiDir
+{
+ BIN_REG(StartGame, 6)
+};
+
+struct PlayerEvent : JSMsg<PlayerEvent>, ServToCli 
+{
+  Color color;
+  int money;
+  string shortMsg;
+  string lotKey;
+  bool addLot;
+
+ JS_OBJ(color, money, shortMsg, lotKey, addLot);
+ JS_REG_NORECV(PlayerEvent, 11)
+};
+
+struct PEventText : JSMsg<PEventText>, ServToCli 
+{
+  string longMsg;
+  bool beneficial;
+
+ JS_OBJ(longMsg, beneficial);
+ JS_REG_NORECV(PEventText, 12)
+};
+
+struct UpdateGameState : BinMsg<UpdateGameState>, ServToCli 
+{
+  GameState gs;
+
+ BIN_REG_NORECV(UpdateGameState, 16)
+};
+
+struct MulesAvail : BinMsg<MulesAvail>, ServToCli 
+{
+  int num;
+  int price;
+
+ BIN_REG_NORECV(MulesAvail, 19)
+};
+
+struct ShortageMsg : JSMsg<ShortageMsg>, ServToCli 
+{
+  string msg;
+
+ JS_OBJ(msg);
+ JS_REG_NORECV(ShortageMsg, 98)
+};
+
+struct EndMsg : JSMsg<EndMsg>, ServToCli 
+{
+  string msg;
+  int score;
+
+ JS_OBJ(msg, score);
+ JS_REG_NORECV(EndMsg, 99)
+};
