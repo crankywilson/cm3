@@ -11,7 +11,6 @@ vector<MsgMapData> msgs;
 vector<MsgMapData>* preInitMsgs;
 
 string jsSendContextBacking;
-JS::SerializerContext jsSendContext(jsSendContextBacking);
 
 int Register(int id, RecvFunc fn, const char *className, bool json, int size)
 {
@@ -52,5 +51,4 @@ void PopulateMsgs()
 {
   printf("All globals initialized, populating msgs vector\n");
   msgs = *preInitMsgs;
-  jsSendContext.serializer.setOptions(JS::SerializerOptions::Compact);
 }

@@ -20,7 +20,6 @@ Game& GetGame(Player *p) { return *(p->g); }
 
 Game::Game()
 {
-  jsSendContext.serializer.setOptions(SerializerOptions::Compact);
   srand(time(NULL));
 }
 
@@ -485,7 +484,7 @@ void Game::Start()
     landlots[k].mNum = (i % 3) + 1;
     int x = k.e;
     int z = k.n;
-    auto g = landlots[k].mg;
+    auto& g = landlots[k].mg;
     for (int j=0; j<landlots[k].mNum; j++)
     {
       g.push_back(r(x * 10.0f - 3.0f + rand_0_1()*6.0f));

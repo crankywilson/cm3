@@ -139,7 +139,8 @@ struct LandLotID
   int e;
   int n;
 
-  bool operator<(const LandLotID o) const { return this->e < o.e && this->n < o.n; } 
+  int ind() const { return ((n+2)*9) + (e+4); } 
+  bool operator<(const LandLotID o) const { return this->ind() < o.ind(); } 
   operator string()
   { 
    string ret="";
@@ -175,7 +176,6 @@ struct MsgMapData
 extern vector<MsgMapData> msgs;
 void PopulateMsgs();
 
-extern JS::SerializerContext jsSendContext;
 extern string jsSendContextBacking;
 
 void RunWSServer(int port);

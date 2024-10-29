@@ -28,6 +28,9 @@ void Send(WebSock& ws, const T& msg)
   if (e.json)
   {
     Token token;
+    jsSendContextBacking.resize(4096);
+    JS::SerializerContext jsSendContext(jsSendContextBacking);
+    jsSendContext.serializer.setOptions(JS::SerializerOptions::Compact);
     jsSendContext.serializer.write((char*)&msgID, sizeof(int));
     TypeHandler<T>::from(msg, token, jsSendContext.serializer);
     jsSendContext.flush();
