@@ -71,6 +71,20 @@ struct StartGame : BinMsg<StartGame>, BiDir
  BIN_REG(StartGame, 6)
 };
 
+
+struct PressedSpaceToContinue : BinMsg<PressedSpaceToContinue>, BiDir
+{
+  Color color;
+
+ BIN_REG(PressedSpaceToContinue, 7)
+};
+
+
+struct AdvanceState : BinMsg<AdvanceState>, ServToCli
+{
+ BIN_REG_NORECV(AdvanceState, 8)
+};
+
 struct PlayerEvent : JSMsg<PlayerEvent>, ServToCli 
 {
   Color color;

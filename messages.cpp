@@ -70,5 +70,10 @@ void StartGame::Recv(Player &p, Game &g)
   g.Start();
 }
 
-
+void PressedSpaceToContinue::Recv(Player &p, Game &g)
+{
+  g.continueRecvd.insert(p.color);
+  if (g.continueRecvd.size() == g.players.size())
+    g.send(AdvanceState{});
+}
 
