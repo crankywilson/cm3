@@ -10,6 +10,13 @@ int main(int argc, char* argv[])
 
   PopulateMsgs();
   
+  if (argc > 1)
+  {
+    int p = atoi(argv[1]);
+    if (p > 0)
+      port = p;
+  }
+
   RunWSServer(port);
   return 0;
 }

@@ -7,17 +7,6 @@ void remove(List<Color>& v, int c)
     if (v[i] == c) { v.erase(v.begin()+i); return; }
 }
 
-void JoinGameReq::Recv(Player &p, Game &g)
-{
-  p.starter = g.players.size() == 1;
-  List<Color> avail = { R, Y, G, B };
-  for (Player other : g.players)
-    remove(avail, other.color);
-  p.color = avail[0];
-  p.name = string("(") + ColorName((Color)p.color) + string(")");  
-  g.send(CurrentPlayers { players:g.players, yourColor:p.color });
-}
-
 void SendCurrentPlayers(Game &g)
 {
   CurrentPlayers cp;
@@ -27,6 +16,17 @@ void SendCurrentPlayers(Game &g)
     cp.yourColor = op.color;
     op.send(cp);
   }
+}
+
+void JoinGameReq::Recv(Player &p, Game &g)
+{
+  p.starter = g.players.size() == 1;
+  List<Color> avail = { R, Y, G, B };
+  for (Player other : g.players)
+    remove(avail, other.color);
+  p.color = avail[0];
+  p.name = string("(") + ColorName((Color)p.color) + string(")");  
+  SendCurrentPlayers(g);
 }
 
 void NameUpdate::Recv(Player &p, Game &g)
