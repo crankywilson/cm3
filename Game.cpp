@@ -26,12 +26,37 @@ Game::Game()
 void Game::Disconnect(Player &p)
 {
   p.ws = nullptr;
+
   // send disconnect msg to other players?
-  // if this is the starter and game hasn't started, 
-  //  then this an unrecoverable situation right now...
+  
+  if (state == GameState::SSetup)
+  {
+    bool newStarter = p.starter;
+    for (auto i=players.begin(); i!=players.end(); i++)
+    {
+      if (i->color == p.color)
+      {
+        players.erase(i);
+        SynchronizeWSPlayerPtrsWithGamePlayers();
+        break;
+      }
+    }
+    if (players.size() > 0)
+    {
+      players[0].starter = true;
+      void SendCurrentPlayers(Game &g);
+      SendCurrentPlayers(*this);
+    }
+  }
 }
 
-void Game::NewConnection(PlayerRef &pr, WebSock* ws, const string &ip)
+void Game::SynchronizeWSPlayerPtrsWithGamePlayers()
+{
+  for (Player& p : players)
+    p.ws->getUserData()->player = &p;
+}
+
+void Game::NewConnection(WebSock* ws, const string &ip)
 {
   if (state == SSetup)
   {
@@ -47,10 +72,9 @@ void Game::NewConnection(PlayerRef &pr, WebSock* ws, const string &ip)
     p.g = this;
     p.color = N;  // gets assigned in NewPlayerReq::Recv
     players.push_back(p);
-    pr.player = &player(p.color);  
-    // now the player pointer in WebSock references
-    // the same player object in the game players vector
-
+    
+    SynchronizeWSPlayerPtrsWithGamePlayers();
+    
     // send gamestate msg?
   }
   else // active game rejoin?
@@ -60,7 +84,7 @@ void Game::NewConnection(PlayerRef &pr, WebSock* ws, const string &ip)
       if (p.ws == nullptr && p.ip == ip)
       {
         p.ws = ws;
-        pr.player = &p;
+        SynchronizeWSPlayerPtrsWithGamePlayers();
          // send gamestate msg?
         return;
       }
@@ -540,7 +564,7 @@ void NewConnection(WebSock *ws)
   if (games.size() == 0)
     games.push_back(Game());
   
-  games[0].NewConnection(*(ws->getUserData()), ws, ip);
+  games[0].NewConnection(ws, ip);
 }
 
 using namespace uWS;
@@ -572,9 +596,12 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
 
   LOGMSG(msgID)(" -> Recv from %c: %s\n", ColorName(ws->getUserData()->player->color)[0], e.className.c_str());
   
-  ((char*)msgData)[msgSize-1] = 0;
-  LOGJSON("%s}\n", msgData + 4);
-  
+  if (e.json)
+  {
+    ((char*)msgData)[msgSize-1] = 0;
+    LOGJSON("%s}\n", msgData + 4);
+    ((char*)msgData)[msgSize-1] = '}';
+  }
   e.recvFunc(ws, msg);
 }
 

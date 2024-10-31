@@ -22,7 +22,7 @@ void JoinGameReq::Recv(Player &p, Game &g)
 {
   p.starter = g.players.size() == 1;
   List<Color> avail = { R, Y, G, B };
-  for (Player other : g.players)
+  for (Player& other : g.players)
     remove(avail, other.color);
   p.color = avail[0];
   p.name = string("(") + ColorName((Color)p.color) + string(")");  

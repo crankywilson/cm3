@@ -43,7 +43,7 @@ struct JoinGameReq : JSMsg<JoinGameReq>, CliToServ
 struct CurrentPlayers : JSMsg<CurrentPlayers>, ServToCli 
 {
   List<Player> players;
-  int yourColor;
+  Color yourColor;
 
  JS_OBJ(players, yourColor);
  JS_REG_NORECV(CurrentPlayers, 2)
@@ -53,7 +53,8 @@ struct NameUpdate : JSMsg<NameUpdate>, CliToServ
 {
   string name;
 
- BIN_REG(NameUpdate, 3)
+ JS_OBJ(name);
+ JS_REG(NameUpdate, 3)
 };
 
 struct ChangeColorReq : BinMsg<ChangeColorReq>, CliToServ

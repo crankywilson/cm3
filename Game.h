@@ -49,7 +49,12 @@ struct Game
   int minIncr = 1;
 
   Game();
-  void NewConnection(PlayerRef &pr, WebSock* ws, const string &ip);
+  
+  void SynchronizeWSPlayerPtrsWithGamePlayers(); 
+    // ^ has to be called whenever players list/vector
+    //   has items added or removed...
+  
+  void NewConnection(WebSock* ws, const string &ip);
   void Disconnect(Player &p);
   void Start();
   

@@ -7,8 +7,8 @@ template <class T>
 void RecvJSTempl(WebSock *ws, const MsgData sv)
 {
   T msg;
-  JS::ParseContext context(sv.data(), sv.size());
-  (void) context.parseTo(msg);
+  JS::ParseContext context(sv.data()+4, sv.size()-4);
+  JS::Error e = context.parseTo(msg);
   Player* p = ws->getUserData()->player;
   msg.Recv(*p, GetGame(p));
 }
