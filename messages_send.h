@@ -23,7 +23,7 @@ void Send(WebSock& ws, const T& msg)
     return;
   }
 
-  LOGMSG(msgID)(" <- Send to   %c: %s\n", ColorName(ws.getUserData()->player)[0], e.className.c_str());
+  LOGMSG(msgID, " <- Send to   %c: %s\n", ColorName(ws.getUserData()->player)[0], e.className.c_str());
 
   if (e.json)
   {
@@ -41,10 +41,11 @@ void Send(WebSock& ws, const T& msg)
     string_view msg(msgPtr, strlen(json) + sizeof(int));
     (void) ws.send(msg);
   
-    LOGJSON("%s\n", json);
+    LOGJSON(json, msg.size()-sizeof(int));
   }
   else
   {
     ws.send(std::string_view((const char*)&msg, sizeof(T)));
+    LOGBIN(((const char*)&msg), sizeof(T));
   }
 }

@@ -180,7 +180,6 @@ extern string jsSendContextBacking;
 
 void RunWSServer(int port);
 
-inline void printnothing(const char*, ...) {}
 #define JSON 1
 
 #define LOG_NOTHING 0
@@ -188,20 +187,31 @@ inline void printnothing(const char*, ...) {}
 #define LOG_ALLMSGS_NOJSON 2
 #define LOG_EVERYTHING 3
 
-#define LOG_LEVEL LOG_NONMOVEMSGS_NOJSON
+#define LOG_LEVEL LOG_EVERYTHING
 
 #if LOG_LEVEL == LOG_EVERYTHING
-#define LOGJSON printf
+ #define LOGJSON(json, size) { \
+  ((char*)json)[size-1] = 0; \
+  printf("%s}\n", json); \
+  ((char*)json)[size-1] = '}'; \
+ }
+ #define LOGBIN(data, size) { \
+  for (int di=0; di<size; di++) printf("%02x", data[di]); \
+  printf("  "); \
+  for (int di=0; di<size; di++) printf("%d,", data[di]); \
+  printf("\n"); \
+ }
 #else
-#define LOGJSON printnothing
+ #define LOGJSON(json, size) 
+ #define LOGBIN(data, size)
 #endif
 
 #if LOG_LEVEL == LOG_NOTHING
-#define LOGMSG(msgID) printnothing
+#define LOGMSG(msgID, ...) 
 #elif LOG_LEVEL == LOG_NONMOVEMSGS_NOJSON
-#define LOGMSG(msgID) if (msgID != 23 && msgID != 24) printf
+#define LOGMSG(msgID, ...) if (msgID != 23 && msgID != 24) printf(__VA_ARGS__)
 #else
-#define LOGMSG(msgID) printf
+#define LOGMSG(msgID, ...) printf(__VA_ARGS__)
 #endif
 
 #if LOG_LEVEL == LOG_NOTHING

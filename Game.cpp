@@ -53,6 +53,7 @@ void Game::Disconnect(Player &p)
 void Game::SynchronizeWSPlayerPtrsWithGamePlayers()
 {
   for (Player& p : players)
+   if (p.ws != nullptr)
     p.ws->getUserData()->player = &p;
 }
 
@@ -138,9 +139,6 @@ void Game::StartNextMonth()
 {
   month++;
 
-  UpdateScores();
-  UpdateGameState(SRankings);
-
   landlotdata.clear();
   for (auto i : landlots)
     landlotdata.push_back({i.first.e, i.first.n, i.second});
@@ -181,20 +179,52 @@ void Game::StartNextMonth()
     BuildMules();
     UpdateResPrices();
     send(MulesAvail{num:mules, price:mulePrice});
+    UpdateScores();
+    UpdateGameState(SRankings);
   }
 }
 
 void Game::UpdateScores()
 {
+    list<Player *> rankList;
+
+    for (Player& p : players)
+    {
+      p.score = 0;
+      for (auto lli : landlots) 
+      {
+        auto ll = lli.second;
+        if (ll.owner == p.color) 
+        {
+          p.score += 500; if (ll.res > -1) 
+            p.score += mulePrice; 
+        }
+      }
+
+      p.res[LAND] = p.score;
+      p.score += p.money;
+      
+      for (int r = 0; r<4; r++)
+        p.score += resPrice[r] * p.res[r];
+
+      rankList.push_back(&p);
+    }
+
+    rankList.sort([](Player* a, Player* b) 
+                  { return a->score > b->score; });
+    
+    int rank = 0;
+    for (Player* p : rankList) 
+      p->rank = ++rank;
 }
 
-UpdateGameState ugs;
+
 
 void Game::UpdateGameState(GameState gs)
 {
   state = gs;
 
-  ugs.gs = gs;
+  struct UpdateGameState ugs{gs:gs};
   send(ugs);
 
   if (gs == SPreDevelop)
@@ -539,7 +569,7 @@ void Game::Start()
   colony.res[ENERGY] = 8;
   colony.res[ORE] = 8;
   started = true;
-  UpdateScores();
+
   state = SRankings;
 
    StartNextMonth();
@@ -594,14 +624,13 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
     return;
   }
 
-  LOGMSG(msgID)(" -> Recv from %c: %s\n", ColorName(ws->getUserData()->player->color)[0], e.className.c_str());
-  
-  if (e.json)
-  {
-    ((char*)msgData)[msgSize-1] = 0;
-    LOGJSON("%s}\n", msgData + 4);
-    ((char*)msgData)[msgSize-1] = '}';
-  }
+  LOGMSG(msgID, " -> Recv from %c: %s\n", ColorName(ws->getUserData()->player->color)[0], e.className.c_str());
+
+  if (e.json) {
+    LOGJSON(msgData + 4, msgSize - 4); }
+  else
+    LOGBIN(msgData, msgSize);
+
   e.recvFunc(ws, msg);
 }
 
