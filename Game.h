@@ -18,7 +18,7 @@ struct Game
 {
   map<LandLotID,
       LandLot>    landlots;
-  int             month      = 1;
+  int             month      = 0;
   string          name       = "Default";
   vector<Player>  players;
   Player          colony     = {C};
@@ -74,7 +74,7 @@ struct Game
         Send(*(p.ws), msg); 
   }
 
-
+  void AdvanceToNextState();
 
   private:
   int auctionType = NONE;

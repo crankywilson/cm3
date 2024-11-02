@@ -75,8 +75,6 @@ void PressedSpaceToContinue::Recv(Player &p, Game &g)
   g.send(*this);
   g.continueRecvd.insert(p.color);
   if (g.continueRecvd.size() == g.players.size())
-    g.send(AdvanceState{});
-
-    // this is bad -- advance state needs to get moved to server side.
+    g.AdvanceToNextState();
 }
 

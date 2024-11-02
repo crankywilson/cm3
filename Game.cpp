@@ -184,6 +184,24 @@ void Game::StartNextMonth()
   }
 }
 
+void Game::AdvanceToNextState()
+{
+    switch (state)
+    {
+      case SRankings:
+        state = SLandGrant;
+        break;
+      case SLandGrant:
+        state = SDevelop;  // need to do land auction and 
+        break;             // events, but not implemented yet
+      case SDevelop:
+        state = SAuction;   // need tp do events
+        break;              // but not implemented yet
+    }
+
+    send(AdvanceState{newState:state});
+}
+
 void Game::UpdateScores()
 {
     list<Player *> rankList;

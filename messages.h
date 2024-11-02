@@ -83,6 +83,8 @@ struct PressedSpaceToContinue : BinMsg<PressedSpaceToContinue>, BiDir
 
 struct AdvanceState : BinMsg<AdvanceState>, ServToCli
 {
+  GameState newState;
+  
  BIN_REG_NORECV(AdvanceState, 8)
 };
 
