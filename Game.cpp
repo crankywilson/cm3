@@ -190,6 +190,9 @@ void Game::AdvanceToNextState()
     {
       case SRankings:
         state = SLandGrant;
+        for (Player& p : players)
+          if (p.ws != nullptr)
+            p.send(LotGrantResp{e:0,n:0,granted:false,playerColor:p.color}); 
         break;
       case SLandGrant:
         state = SDevelop;  // need to do land auction and 

@@ -151,6 +151,7 @@ struct LandLotID
    else ret += "N" + to_string(n);
    return ret;
   }
+  LandLotID(int ep, int np) : e(ep), n(np) {}
  JS_OBJ(e, n);
 };
 

@@ -78,3 +78,32 @@ void PressedSpaceToContinue::Recv(Player &p, Game &g)
     g.AdvanceToNextState();
 }
 
+void ReqLot::Recv(Player& p, Game& g)
+{
+  if (e < -4 || e > 4 || n < -2 || n > 2) 
+  {
+    p.send(LotGrantResp{e:e,n:n,granted:false,playerColor:p.color});
+    return;
+  } 
+
+  if (e == 0 && n == 0) 
+  {
+    p.send(LotGrantResp{e:e,n:n,granted:false,playerColor:p.color});
+    return;
+  } 
+
+  LandLotID k(e,n);
+  if (g.landlots.find(k) != g.landlots.end())
+  {
+    if (g.landlots[k].owner != N)
+    {
+      p.send(LotGrantResp{e:e,n:n,granted:false,playerColor:p.color});
+      return;
+    }
+  }
+
+  g.landlots[k].owner = p.color;
+  g.send(LotGrantResp{e:e,n:n,granted:true,playerColor:p.color});
+  
+  g.send(AdvanceState{newState:SDevelop});
+}

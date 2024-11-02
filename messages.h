@@ -124,6 +124,27 @@ struct MulesAvail : BinMsg<MulesAvail>, ServToCli
  BIN_REG_NORECV(MulesAvail, 19)
 };
 
+
+struct ReqLot : BinMsg<ReqLot>, CliToServ 
+{
+  int e;
+  int n;
+  
+ BIN_REG(ReqLot, 27)
+};
+
+// msg sent with 0,0 to activate key handler
+struct LotGrantResp : BinMsg<LotGrantResp>, ServToCli
+{
+  int e;
+  int n;
+  bool granted;
+  Color playerColor;
+  
+ BIN_REG_NORECV(LotGrantResp, 28)
+};
+
+
 struct ShortageMsg : JSMsg<ShortageMsg>, ServToCli 
 {
   string msg;
