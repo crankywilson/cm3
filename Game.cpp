@@ -143,6 +143,26 @@ void Game::StartNextMonth()
   for (auto i : landlots)
     landlotdata.push_back({i.first.e, i.first.n, i.second});
   
+  List<string> resourceShortages;
+  if (colony.res[FOOD] == 0) resourceShortages.push_back("food");
+  if (colony.res[ENERGY] == 0) resourceShortages.push_back("energy");
+  if (colony.res[ORE] < 2) resourceShortages.push_back("smithore");
+  if (resourceShortages.size() > 0 && month <= 12)
+  {
+    string resList = resourceShortages[0];
+    if (resourceShortages.size() == 2)
+      resList += " and " + resourceShortages[1];
+    else if (resourceShortages.size() > 2)
+      resList = "food, energy, and smithore";
+
+    send(ShortageMsg{msg:"The colony has a shortage of " + resList + "!"});
+  }
+  
+  BuildMules();
+  UpdateResPrices();
+  send(MulesAvail{num:mules, price:mulePrice});
+  UpdateScores();
+    
   send(GameData{gd:*this});
 
   if (month > 12)
@@ -159,29 +179,11 @@ void Game::StartNextMonth()
 
     send(EndMsg{msg:et[scoreKey], score:colonyScore});
     UpdateGameState(SEnd);
+    return;
   }
-  else
-  {
-    List<string> resourceShortages;
-    if (colony.res[FOOD] == 0) resourceShortages.push_back("food");
-    if (colony.res[ENERGY] == 0) resourceShortages.push_back("energy");
-    if (colony.res[ORE] < 2) resourceShortages.push_back("smithore");
-    if (resourceShortages.size() > 0)
-    {
-      string resList = resourceShortages[0];
-      if (resourceShortages.size() == 2)
-        resList += " and " + resourceShortages[1];
-      else if (resourceShortages.size() > 2)
-        resList = "food, energy, and smithore";
 
-      send(ShortageMsg{msg:"The colony has a shortage of " + resList + "!"});
-    }
-    BuildMules();
-    UpdateResPrices();
-    send(MulesAvail{num:mules, price:mulePrice});
-    UpdateScores();
-    UpdateGameState(SRankings);
-  }
+  UpdateGameState(SRankings);
+  
 }
 
 void Game::AdvanceToNextState()
