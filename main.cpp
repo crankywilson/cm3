@@ -18,5 +18,7 @@ int main(int argc, char* argv[])
   }
 
   RunWSServer(port);
+
+  printf("WS Server completed without kill. (?)");
   return 0;
 }

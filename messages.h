@@ -281,6 +281,27 @@ struct NoMoreMules : BinMsg<NoMoreMules>, ServToCli
  BIN_REG_NORECV(NoMoreMules, 30)
 };
 
+
+struct OutfitMule : BinMsg<OutfitMule>, BiDir
+{
+  Color c;
+  ResType res;
+  int newMoney; // if < 0, disregard and show 'can't afford'
+
+ BIN_REG_NORECV(OutfitMule, 31)
+};
+
+struct InstallMule : BinMsg<OutfitMule>, BiDir
+{
+  Color c;
+  LandLotID lot;
+  ResType res;
+  bool switchWithExisting;
+  ResType existingRes;
+
+ BIN_REG_NORECV(InstallMule, 32)
+};
+
 struct ShortageMsg : JSMsg<ShortageMsg>, ServToCli 
 {
   string msg;
