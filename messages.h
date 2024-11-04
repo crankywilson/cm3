@@ -88,6 +88,26 @@ struct AdvanceState : BinMsg<AdvanceState>, ServToCli
  BIN_REG_NORECV(AdvanceState, 8)
 };
 
+
+struct UpdateBidReq : BinMsg<UpdateBidReq>, CliToServ
+{
+  int bid;
+
+ BIN_REG(UpdateBidReq, 9)
+};
+
+struct CurrentAuctionState : BinMsg<CurrentAuctionState>, ServToCli
+{
+  int R;
+  int Y;
+  int G;
+  int B;
+  int lowestAsk;
+  int highestBid;
+
+ BIN_REG_NORECV(CurrentAuctionState, 10)
+};
+
 struct PlayerEvent : JSMsg<PlayerEvent>, ServToCli 
 {
   Color color;
@@ -109,11 +129,55 @@ struct PEventText : JSMsg<PEventText>, ServToCli
  JS_REG_NORECV(PEventText, 12)
 };
 
+
+struct CurrentAuction : BinMsg<CurrentAuction>, ServToCli
+{
+  int auctionType;
+  int month;
+  int minBid;
+  int unitsAvail;
+  
+ BIN_REG_NORECV(CurrentAuction, 13)
+};
+
+struct BuySell : BinMsg<BuySell>, BiDir
+{
+  Color color;
+  bool buy;
+
+  void Recv()
+  {
+  }
+
+ BIN_REG(BuySell, 14)
+};
+
+struct LotAuction : BinMsg<LotAuction>, ServToCli
+{
+  int e;
+  int n;
+
+ BIN_REG_NORECV(LotAuction, 15)
+};
+
 struct UpdateGameState : BinMsg<UpdateGameState>, ServToCli 
 {
   GameState gs;
 
  BIN_REG_NORECV(UpdateGameState, 16)
+};
+
+// GameData (msg 17) defined in Game.cpp
+
+class ColonyEvent : JSMsg<ColonyEvent>, ServToCli  
+{
+  string fullMsg;
+  int colonyEvent;
+  string lotKey;
+  bool beforeProd;
+
+ JS_OBJ(fullMsg, colonyEvent, lotKey, beforeProd);
+ JS_REG_NORECV(ColonyEvent, 18)
 };
 
 struct MulesAvail : BinMsg<MulesAvail>, ServToCli 
@@ -124,6 +188,69 @@ struct MulesAvail : BinMsg<MulesAvail>, ServToCli
  BIN_REG_NORECV(MulesAvail, 19)
 };
 
+
+struct MuleBuyReq : BinMsg<MuleBuyReq>, CliToServ 
+{
+ BIN_REG(MuleBuyReq, 20)
+};
+
+struct MuleBought : BinMsg<MuleBought>, ServToCli 
+{
+  Color color;
+  int newMoney;
+  int newMules;
+
+ BIN_REG_NORECV(MuleBought, 21)
+};
+
+struct PreAuctionStat : BinMsg<PreAuctionStat>, ServToCli 
+{
+  Color color;
+  int start;
+  int used;
+  int spoiled;
+  int produced;
+  int current;
+  int surplus; 
+
+ BIN_REG_NORECV(PreAuctionStat, 22)
+};
+ 
+struct ModelRot : BinMsg<ModelRot>, BiDir 
+{
+  Color color;
+  float yrot;
+  float dirx;
+  float dirz;
+  float x;
+  float z;
+
+ BIN_REG(ModelRot, 23)
+};
+
+struct ModelPos : BinMsg<ModelPos>, BiDir 
+{
+  Color color;
+  bool stop;
+  float x;
+  float z;
+
+ BIN_REG(ModelPos, 24)
+};
+
+struct MuleSellReq : BinMsg<MuleSellReq>, CliToServ 
+{
+ BIN_REG(MuleSellReq, 25)
+};
+
+struct MuleSold : BinMsg<MuleSold>, ServToCli 
+{
+  Color color;
+  int newMoney;
+  int newMules;
+  
+ BIN_REG_NORECV(MuleSold, 26)
+};
 
 struct ReqLot : BinMsg<ReqLot>, CliToServ 
 {
@@ -144,6 +271,15 @@ struct LotGrantResp : BinMsg<LotGrantResp>, ServToCli
  BIN_REG_NORECV(LotGrantResp, 28)
 };
 
+struct CantAffordMule : BinMsg<CantAffordMule>, ServToCli
+{
+ BIN_REG_NORECV(CantAffordMule, 29)
+};
+
+struct NoMoreMules : BinMsg<NoMoreMules>, ServToCli
+{
+ BIN_REG_NORECV(NoMoreMules, 30)
+};
 
 struct ShortageMsg : JSMsg<ShortageMsg>, ServToCli 
 {

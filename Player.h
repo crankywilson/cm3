@@ -30,7 +30,7 @@ struct Player
   Player(enum Color c) : Player() { color = c; }
 
   bool buying;
-  int currentBid;
+  int currentBid = BUY;
   int plEvent;
   int used[4];
   int spoiled[4];

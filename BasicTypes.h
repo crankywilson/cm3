@@ -181,6 +181,12 @@ extern string jsSendContextBacking;
 
 void RunWSServer(int port);
 
+const int INVALID = -2;
+const int TARGET_REACHED = -1;
+const int BUY = 0;
+const int SELL = 9999;
+
+
 #define JSON 1
 
 #define LOG_NOTHING 0

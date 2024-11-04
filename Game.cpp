@@ -157,7 +157,7 @@ void Game::StartNextMonth()
 
     send(ShortageMsg{msg:"The colony has a shortage of " + resList + "!"});
   }
-  
+
   BuildMules();
   UpdateResPrices();
   send(MulesAvail{num:mules, price:mulePrice});
@@ -188,6 +188,8 @@ void Game::StartNextMonth()
 
 void Game::AdvanceToNextState()
 {
+  continueRecvd.clear();
+
     switch (state)
     {
       case SRankings:

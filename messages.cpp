@@ -105,5 +105,81 @@ void ReqLot::Recv(Player& p, Game& g)
   g.landlots[k].owner = p.color;
   g.send(LotGrantResp{e:e,n:n,granted:true,playerColor:p.color});
   
-  g.send(AdvanceState{newState:SDevelop});
+  PressedSpaceToContinue cont;
+  cont.color = p.color;
+  cont.Recv(p, g);
+}
+
+void UpdateBidReq::Recv(Player& p, Game& g)
+{
+  p.currentBid = bid;  // no error checking yet
+
+  CurrentAuctionState st;
+  st.highestBid = g.minBid;
+  st.lowestAsk = 45;
+  st.R = g.player(R).currentBid;
+  st.Y = g.player(Y).currentBid;
+  st.G = g.player(G).currentBid;
+  st.B = g.player(B).currentBid;
+
+  for (Player& p : g.players)
+  {
+    if (p.buying && p.currentBid > st.highestBid)
+      st.highestBid = p.currentBid;
+    if (!p.buying && p.currentBid < st.lowestAsk)
+      st.lowestAsk = p.currentBid;
+  }
+
+  g.send(st);
+}
+
+void BuySell::Recv(Player& p, Game& g)
+{
+}
+
+void MuleBuyReq::Recv(Player& p, Game& g)
+{
+  if (p.money < g.mulePrice)
+  {
+    g.send(CantAffordMule());
+    return;
+  }
+
+  if (p.money < g.mules)
+  {
+    g.send(NoMoreMules());
+    return;
+  }
+
+  MuleBought mb;
+  mb.color = p.color;
+  p.money -= g.mulePrice;
+  p.hasMule = true;
+  mb.newMoney = p.money;
+  g.mules--;
+  mb.newMules = g.mules;
+
+  g.send(mb);
+}
+
+void ModelPos::Recv(Player&, Game& g)
+{
+  g.send(*this);
+}
+
+void ModelRot::Recv(Player&, Game& g)
+{
+  g.send(*this);
+}
+
+void MuleSellReq::Recv(Player& p, Game& g)
+{
+  MuleSold ms;
+  ms.color = p.color;
+  p.money += g.mulePrice;
+  p.hasMule = false;
+  ms.newMoney = p.money;
+  g.mules++;
+  ms.newMules = g.mules;
+  g.send(ms);
 }
