@@ -612,7 +612,7 @@ void Listening(us_listen_socket_t *param)
 
 void NewConnection(WebSock *ws)
 {
-  string ip(ws->getRemoteAddressAsText());
+  string ip(ws->getUserData()->ip);
   LOG("New connection from '%s'\n", ip.c_str());
 
   // we'll only support one game for now
@@ -662,8 +662,19 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
 void ConnectionClosed(WebSock *ws, int, MsgData)
 {
   Player &p = *((ws->getUserData())->player);
-  LOG("Connection closed %d\n", p.color);
+  LOG("Connection closed %s\n", ColorName(p.color));
   p.g->Disconnect(p);
+}
+
+void Upg(HttpResponse<false> *res, HttpRequest *req, struct us_socket_context_t *context)
+{
+  res->upgrade(
+    PlayerRef{nullptr, string(req->getHeader("x-remote-ip"))},
+    req->getHeader("sec-websocket-key"),
+    req->getHeader("sec-websocket-protocol"),
+    req->getHeader("sec-websocket-extensions"),
+    context
+  );
 }
 
 void RunWSServer(int port)
@@ -672,6 +683,8 @@ void RunWSServer(int port)
   runningPort = port;
   app.ws<PlayerRef>("/*", 
    {
+    .idleTimeout = 0,
+    .upgrade = Upg,
     .open = NewConnection,
     .message = Recv,
     .close = ConnectionClosed

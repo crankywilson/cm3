@@ -16,6 +16,7 @@ struct Player;
 struct PlayerRef 
 {
   Player *player;
+  string ip;
 };
 
 typedef uWS::WebSocket<false, true, PlayerRef> WebSock;
