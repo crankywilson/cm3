@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "uWebSockets.h"
+#include <ctime>
 
 using namespace JS;
 
@@ -17,6 +18,15 @@ const char* ColorName(Color c)
 }
 
 Game& GetGame(Player *p) { return *(p->g); }
+
+const char *ltime()
+{
+  static char tbuf[30];
+  time_t now = time(0);
+  tm *ltm = localtime(&now);
+  strftime(tbuf, 30, "%I:%M:%S %p", ltm);
+  return tbuf;
+}
 
 Game::Game()
 {
@@ -613,7 +623,7 @@ void Listening(us_listen_socket_t *param)
 void NewConnection(WebSock *ws)
 {
   string ip(ws->getUserData()->ip);
-  LOG("New connection from '%s'\n", ip.c_str());
+  LOG("New connection from '%s' (%s)\n", ip.c_str(), ltime());
 
   // we'll only support one game for now
   if (games.size() == 0)
@@ -662,7 +672,7 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
 void ConnectionClosed(WebSock *ws, int, MsgData)
 {
   Player &p = *((ws->getUserData())->player);
-  LOG("Connection closed %s\n", ColorName(p.color));
+  LOG("Connection closed %s (%s)\n", ColorName(p.color), ltime());
   p.g->Disconnect(p);
 }
 
