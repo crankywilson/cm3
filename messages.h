@@ -288,7 +288,7 @@ struct OutfitMule : BinMsg<OutfitMule>, BiDir
   ResType res;
   int newMoney; // if < 0, disregard and show 'can't afford'
 
- BIN_REG_NORECV(OutfitMule, 31)
+ BIN_REG(OutfitMule, 31)
 };
 
 struct InstallMule : BinMsg<OutfitMule>, BiDir
@@ -299,7 +299,7 @@ struct InstallMule : BinMsg<OutfitMule>, BiDir
   bool switchWithExisting;
   ResType existingRes;
 
- BIN_REG_NORECV(InstallMule, 32)
+ BIN_REG(InstallMule, 32)
 };
 
 struct ShortageMsg : JSMsg<ShortageMsg>, ServToCli 

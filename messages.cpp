@@ -183,3 +183,27 @@ void MuleSellReq::Recv(Player& p, Game& g)
   ms.newMules = g.mules;
   g.send(ms);
 }
+
+void InstallMule::Recv(Player& p, Game& g)
+{
+  // fix this to update g.landlots
+  
+  c = p.color;
+  switchWithExisting = false;
+
+  g.send(*this);
+}
+
+void OutfitMule::Recv(Player& p, Game& g)
+{
+  newMoney = p.money - (res+1)*25;
+  if (newMoney < 0)
+  {
+    p.send(*this);
+    return;
+  }
+
+  p.money = newMoney;
+  c = p.color;
+  g.send(*this);
+}
