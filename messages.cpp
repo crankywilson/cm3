@@ -186,11 +186,13 @@ void MuleSellReq::Recv(Player& p, Game& g)
 
 void InstallMule::Recv(Player& p, Game& g)
 {
-  // fix this to update g.landlots
-  
   c = p.color;
-  switchWithExisting = false;
-
+  LandLot& ldata = g.landlots[lot];
+  switchWithExisting = ldata.res != NONE;
+  existingRes = (ResType)ldata.res;
+  ldata.owner = p.color;
+  ldata.res = res;
+  p.hasMule = switchWithExisting;
   g.send(*this);
 }
 
