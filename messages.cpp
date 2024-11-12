@@ -116,7 +116,7 @@ void UpdateBidReq::Recv(Player& p, Game& g)
 
   CurrentAuctionState st;
   st.highestBid = g.minBid;
-  st.lowestAsk = 45;
+  st.lowestAsk = g.minBid + 35;
   st.R = g.player(R).currentBid;
   st.Y = g.player(Y).currentBid;
   st.G = g.player(G).currentBid;
@@ -125,9 +125,15 @@ void UpdateBidReq::Recv(Player& p, Game& g)
   for (Player& p : g.players)
   {
     if (p.buying && p.currentBid > st.highestBid)
+    {
+      //printf("buying = %d, currentBid = %d, setting highestBID\n", p.buying, p.currentBid);
       st.highestBid = p.currentBid;
+    }
     if (!p.buying && p.currentBid < st.lowestAsk)
+    {
+      //printf("buying = %d, currentBid = %d, setting lowestAsk\n", p.buying, p.currentBid);
       st.lowestAsk = p.currentBid;
+    }
   }
 
   g.send(st);

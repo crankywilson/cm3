@@ -213,6 +213,10 @@ void Game::AdvanceToNextState()
         break;             // events, but not implemented yet
       case SDevelop:
         state = SAuction;   // need tp do events
+        for (Player& p : players)
+        {
+          p.buying = (p.color != Y);
+        }
         break;              // but not implemented yet
     }
 
