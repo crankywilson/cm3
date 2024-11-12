@@ -13,7 +13,7 @@ struct Player
   bool        starter;
   int         money  = 1000;
   vector<int> res    = { 5, 2, 0, 0, 0 };
-  bool        hasMule;
+  bool        hasMule = false;
   int         score;
   int         rank;
 

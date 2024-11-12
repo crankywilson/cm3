@@ -625,6 +625,18 @@ void NewConnection(WebSock *ws)
   string ip(ws->getUserData()->ip);
   LOG("New connection from '%s' (%s)\n", ip.c_str(), ltime());
 
+  // For dev, let's kill the game if new connection after setup
+  if (games.size() > 0 && games[0].state != SSetup)
+  {
+    for (Player &p : games[0].players)
+    {
+      if (p.ws != nullptr)
+        p.ws->close();
+    }
+
+    games.clear();
+  }
+
   // we'll only support one game for now
   if (games.size() == 0)
     games.push_back(Game());

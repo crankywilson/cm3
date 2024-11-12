@@ -318,3 +318,12 @@ struct EndMsg : JSMsg<EndMsg>, ServToCli
  JS_OBJ(msg, score);
  JS_REG_NORECV(EndMsg, 99)
 };
+
+struct Cantina : BinMsg<Cantina>, BiDir
+{
+  Color c;
+  int winnings;
+  int newMoney;
+
+ BIN_REG(Cantina, 33)
+};

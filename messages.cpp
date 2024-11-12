@@ -209,3 +209,12 @@ void OutfitMule::Recv(Player& p, Game& g)
   c = p.color;
   g.send(*this);
 }
+
+void Cantina::Recv(Player& p, Game& g)
+{
+  c = p.color;
+  winnings = 100;
+  p.money += winnings;
+  newMoney = p.money;
+  g.send(*this);
+}
