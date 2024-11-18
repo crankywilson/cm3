@@ -327,3 +327,13 @@ struct Cantina : BinMsg<Cantina>, BiDir
 
  BIN_REG(Cantina, 33)
 };
+
+struct ConfirmTrade : BinMsg<ConfirmTrade>, BiDir
+{
+  int tradeConfirmID;
+  ResType res;
+  int price;
+  bool accept;
+  
+ BIN_REG(ConfirmTrade, 34)
+};

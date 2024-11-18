@@ -2,6 +2,7 @@
 
 #include "BasicTypes.h"
 #include "Player.h"  // game depends on player, but not other way around
+#include <condition_variable>
 
 extern Player NoPlayer;
 inline bool Exists(Player &p) { return &p != &NoPlayer; }
@@ -30,6 +31,12 @@ struct Game
   JS_OBJ(month, name, players, colony, state, mules,
           mulePrice, resPrice, landlotdata);
 
+  /* /\ these 2 need the same list of members \/ */
+
+  Game(const Game &g) : month(month), name(name), players(players), 
+    colony(colony), state(state), mules(mules), mulePrice(mulePrice),
+    resPrice(resPrice), landlotdata(landlotdata) {}
+
   List<LandLotData> landlotdata;
   List<int> possibleColonyEvents = {-1,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,-1};
   List<int> possibleGoodPlayerEvents = {0,1,2,3,4,5,6,7,8,9,10,11,12};
@@ -49,7 +56,16 @@ struct Game
   int minIncr = 1;
 
   Game();
-  
+
+  thread              tradeThread;            // create new when auction starts
+  thread              auctionTimerThread;     // create new when auction starts
+  mutex               tradeMutex;
+  condition_variable  tradeCond;              // when moving during auction, call notify on this to wake up tradeThread
+  bool                tradeMovement = false;  // when moving during auction, set this to true which auctionTimerThread will periodically look at
+  bool                activeTrading = false;  // tradeThread updates this, auctionTimerThread reads from it and stops the clock while set
+  double              auctionTime;
+  int                 tradeConfirmID = 0;
+
   void SynchronizeWSPlayerPtrsWithGamePlayers(); 
     // ^ has to be called whenever players list/vector
     //   has items added or removed...
@@ -75,6 +91,9 @@ struct Game
   }
 
   void AdvanceToNextState();
+  void EndAuction();
+  int  AuctionID();
+  bool GetBuyerAndSeller(Player **buyer, Player **seller);
 
   private:
   int auctionType = NONE;
@@ -86,6 +105,8 @@ struct Game
   void UpdateResPrices();
   void SendPlayerEvents();
   int NumLots(Player p, int r);
+
+
 
   string pe[22] = {
 /*0*/"You just received a package from your home-world relatives containing 3 food and 2 energy units.",

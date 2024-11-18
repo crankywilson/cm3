@@ -7,6 +7,7 @@ add_executable(cmul
  messages_reg.cpp
  Game.cpp
  Player.cpp
+ trade.cpp
 )
 
 add_compile_definitions(UWS_NO_ZLIB LIBUS_NO_SSL)

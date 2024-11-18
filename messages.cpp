@@ -224,3 +224,7 @@ void Cantina::Recv(Player& p, Game& g)
   newMoney = p.money;
   g.send(*this);
 }
+
+void ConfirmTrade::Recv(Player& p, Game& g)
+{
+}

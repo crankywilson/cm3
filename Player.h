@@ -37,4 +37,5 @@ struct Player
   int startingRes[4];
   int produced[4];
   bool energyShort;
+  bool confirmed;
 };

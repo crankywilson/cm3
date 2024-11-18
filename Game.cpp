@@ -550,8 +550,22 @@ void Game::SendPlayerEvents()
   }
 }
 
+bool Game::GetBuyerAndSeller(Player **buyer, Player **seller)
+{
+  return false;
+}
+
+int Game::AuctionID()
+{
+  return month * 10 + auctionType;
+}
+
 void Game::Start()
 {
+  void TradeThread(Game *game_ptr, int auctionID);
+  tradeThread = thread(TradeThread, this, AuctionID());
+  tradeThread.detach();
+  
   List<LandLotID> availMoundPlots;
   List<LandLotID> availHCPlots;
 
@@ -612,6 +626,11 @@ void Game::Start()
   state = SRankings;
 
    StartNextMonth();
+}
+
+void Game::EndAuction()
+{
+  state = SAuctionOver;
 }
    
 
