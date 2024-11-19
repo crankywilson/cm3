@@ -61,10 +61,15 @@ struct Game
   thread              auctionTimerThread;     // create new when auction starts
   mutex               tradeMutex;
   condition_variable  tradeCond;              // when moving during auction, call notify on this to wake up tradeThread
-  bool                tradeMovement = false;  // when moving during auction, set this to true which auctionTimerThread will periodically look at
-  bool                activeTrading = false;  // tradeThread updates this, auctionTimerThread reads from it and stops the clock while set
-  double              auctionTime;
+  atomic_bool         tradeMovement = false;  // when moving during auction, set this to true which auctionTimerThread will periodically look at
+  atomic_bool         activeTrading = false;  // tradeThread updates this, auctionTimerThread reads from it and stops the clock while set
+  atomic_int32_t      auctionTime;
   int                 tradeConfirmID = 0;
+  Player*             tradingBuyer  = nullptr; // read these in MessageHandler with tradeMutex ... only notify if tradingBuyer/tradingSeller moves or a potential buyer and seller meet
+  Player*             tradingSeller = nullptr; // write these in tradeThread with mutex
+
+  bool GetNextBuyerAndSeller(Player **buyer, Player **seller);
+
 
   void SynchronizeWSPlayerPtrsWithGamePlayers(); 
     // ^ has to be called whenever players list/vector
@@ -93,7 +98,6 @@ struct Game
   void AdvanceToNextState();
   void EndAuction();
   int  AuctionID();
-  bool GetBuyerAndSeller(Player **buyer, Player **seller);
 
   private:
   int auctionType = NONE;

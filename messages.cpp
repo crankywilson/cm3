@@ -137,6 +137,26 @@ void UpdateBidReq::Recv(Player& p, Game& g)
   }
 
   g.send(st);
+
+  bool notify = false;
+  // lock scope
+  {
+    lock_guard<mutex> lock(g.tradeMutex);
+    if (&p == g.tradingBuyer || &p == g.tradingSeller)
+      notify = true;
+    else
+    {
+      Player *buyer, *seller;
+      if (g.GetNextBuyerAndSeller(&buyer, &seller))
+      {
+        if (&p == buyer || &p == seller)
+          notify = true;
+      }
+    }
+  }
+
+  if (notify)
+    g.tradeCond.notify_all();
 }
 
 void BuySell::Recv(Player& p, Game& g)

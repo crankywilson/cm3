@@ -5,6 +5,13 @@ using namespace std::chrono;
 
 typedef time_point<high_resolution_clock> timepoint;
 
+struct TradeData
+{
+  Game& g;
+  int auctionID;
+  unique_lock<mutex>& lk;
+};
+
 inline timepoint now()
 {
   return high_resolution_clock::now();
@@ -15,48 +22,62 @@ timepoint millis(int millis)
   return now() + milliseconds(millis);
 }
 
-bool GetConfirms(Player &buyer, Player &seller, int auctionID, Game& g, unique_lock<mutex>& lk)
+inline bool Continue(Game& g, int auctionID)
 {
-  int delay = 500;
+  return g.AuctionID() == auctionID && g.auctionTime > 0;
+}
+
+inline bool Continue(TradeData& t)
+{
+  return t.g.AuctionID() == t.auctionID && t.g.auctionTime > 0;
+}
+
+
+bool GetConfirms(TradeData& t)
+{
+  int delay = 700;
   timepoint waituntil = millis(delay);
 
-  Player* currentbuyer = nullptr, *currentseller = nullptr;
-  while (g.GetBuyerAndSeller(&currentbuyer, &currentseller) &&
-         currentbuyer == &buyer &&
-         currentseller == &seller &&
-         g.AuctionID() == auctionID)
+  Player* buyer = nullptr, *seller = nullptr;
+  while (t.g.GetNextBuyerAndSeller(&buyer, &seller) &&
+         t.g.tradingBuyer  == buyer  &&
+         t.g.tradingSeller == seller &&
+         Continue(t))
   {
-    g.tradeCond.wait_until(lk, waituntil);
+    t.g.tradeCond.wait_until(t.lk, waituntil);
 
-    if (buyer.confirmed && seller.confirmed)
+    if (buyer->confirmed && seller->confirmed)
       return true;
 
-    if (now() < waituntil) continue;
+    if (now() >= waituntil) break;
   }
 
   return false;
 }
 
-void TradeUnits(Player &buyer, Player &seller, int auctionID, Game& g, unique_lock<mutex>& lk)
+void TradeUnits(TradeData& t)
 {
   int delay = 1250;
   timepoint waituntil = millis(delay);
 
-  Player* currentbuyer = nullptr, *currentseller = nullptr;
-  while (g.GetBuyerAndSeller(&currentbuyer, &currentseller) &&
-         currentbuyer == &buyer &&
-         currentseller == &seller &&
-         g.AuctionID() == auctionID)
+  Player* buyer = nullptr, *seller = nullptr;
+  while (t.g.GetNextBuyerAndSeller(&buyer, &seller) &&
+         t.g.tradingBuyer  == buyer  &&
+         t.g.tradingSeller == seller &&
+         Continue(t))
   {
-    g.tradeCond.wait_until(lk, waituntil);
+    t.g.tradeCond.wait_until(t.lk, waituntil);
     if (now() < waituntil) continue;
 
-    g.tradeConfirmID++;
-    buyer.confirmed = false;
-    seller.confirmed = false;
-    buyer.send(ConfirmTrade{});
+    if (!Continue(t)) break;
 
-    if (GetConfirms(buyer, seller, auctionID, g, lk))
+    t.g.tradeConfirmID++;
+    buyer->confirmed = false;
+    seller->confirmed = false;
+    buyer->send(ConfirmTrade{});
+    seller->send(ConfirmTrade{});
+
+    if (GetConfirms(t))
     {
       // trade money and goods
 
@@ -72,60 +93,73 @@ void TradeUnits(Player &buyer, Player &seller, int auctionID, Game& g, unique_lo
     }
     else  // confirmation was not received
     {
-      if (!buyer.confirmed)
+      if (!buyer->confirmed)
       {
         // send buyer back to buy line
       }
-      if (!seller.confirmed)
+      if (!seller->confirmed)
       {
         // send seller back to sell line
       }
 
-      // no confirmation means end of trade
-      buyer.confirmed = false;
-      seller.confirmed = false;
-      return;
+      break;
     }
   }
 
-  buyer.confirmed = false;
-  seller.confirmed = false;
+  t.g.tradingBuyer->confirmed = false;
+  t.g.tradingSeller->confirmed = false;
+  t.g.tradingBuyer = nullptr;
+  t.g.tradingSeller = nullptr;
 }
 
-bool StartTrade(unique_lock<mutex>& lk, int auctionID, Game &g)
+void StartTrade(TradeData &t)
 {
-  while (g.auctionTime <= 0 && g.AuctionID() == auctionID)
-  {
-    Player* buyer = nullptr, *seller = nullptr;
-    if (g.GetBuyerAndSeller(&buyer, &seller))
-    {
-      TradeUnits(*buyer, *seller, auctionID, g, lk);
-    }
-  }
-  
-  return false;
+  // allow short delay for websocket latency
+  int delay = 200;
+  timepoint waituntil = millis(delay);
+
+  while (now() < waituntil && Continue(t))
+    t.g.tradeCond.wait_until(t.lk, waituntil);
+
+  if (!Continue(t))
+    return;
+
+  Player *buyer = nullptr, *seller = nullptr;
+  if (!t.g.GetNextBuyerAndSeller(&buyer, &seller))
+    return;
+
+  t.g.tradingBuyer = buyer;
+  t.g.tradingSeller = seller;
+
+  TradeUnits(t);
+
+  t.g.tradingBuyer = nullptr;
+  t.g.tradingSeller = nullptr;
 }
+
 
 void TradeThread(Game *game_ptr, int auctionID)
 {
   Game& g = *game_ptr;
   unique_lock lk(g.tradeMutex);
 
-  while (!StartTrade(lk, auctionID, g))
-  {
-    if (g.AuctionID() != auctionID)
-      return;   // this is bad, should have got to 0 time first
+  g.tradingBuyer = nullptr;
+  g.tradingSeller = nullptr;
 
-    if (g.auctionTime <= 0)
+  while (Continue(g, auctionID))
+  {
+    Player* buyer = nullptr;
+    Player* seller = nullptr;
+
+    while (!g.GetNextBuyerAndSeller(&buyer, &seller))
     {
-      g.EndAuction();
-      return;
+      g.tradeCond.wait(lk);
+      if (!Continue(g, auctionID)) return;
     }
 
-    g.tradeCond.wait(lk);
+    TradeData t = {g:g, auctionID:auctionID, lk:lk};
+
+    StartTrade(t);
   }
-
-
-  // g.state == SEnd, end thread
 }
 

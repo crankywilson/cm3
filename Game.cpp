@@ -550,7 +550,7 @@ void Game::SendPlayerEvents()
   }
 }
 
-bool Game::GetBuyerAndSeller(Player **buyer, Player **seller)
+bool Game::GetNextBuyerAndSeller(Player **buyer, Player **seller)
 {
   return false;
 }
