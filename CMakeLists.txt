@@ -8,6 +8,7 @@ add_executable(cmul
  Game.cpp
  Player.cpp
  trade.cpp
+ auctiontimer.cpp
 )
 
 add_compile_definitions(UWS_NO_ZLIB LIBUS_NO_SSL)

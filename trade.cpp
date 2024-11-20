@@ -112,11 +112,20 @@ void TradeUnits(TradeData& t)
   t.g.tradingSeller = nullptr;
 }
 
+struct SetActiveTrading
+{
+  Game &g;
+  SetActiveTrading(Game& g) : g(g) { g.activeTrading = true; }
+  ~SetActiveTrading() { g.activeTrading = false; }
+};
+
 void StartTrade(TradeData &t)
 {
   // allow short delay for websocket latency
   int delay = 200;
   timepoint waituntil = millis(delay);
+
+  SetActiveTrading scope(t.g);  // sets t.g.activeTrading = true (and false on function return)
 
   while (now() < waituntil && Continue(t))
     t.g.tradeCond.wait_until(t.lk, waituntil);

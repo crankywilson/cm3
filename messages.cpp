@@ -112,6 +112,8 @@ void ReqLot::Recv(Player& p, Game& g)
 
 void UpdateBidReq::Recv(Player& p, Game& g)
 {
+  unique_lock lock(g.tradeMutex);
+
   p.currentBid = bid;  // no error checking yet
 
   CurrentAuctionState st;
@@ -138,22 +140,23 @@ void UpdateBidReq::Recv(Player& p, Game& g)
 
   g.send(st);
 
+  g.tradeMovement = true;
+
   bool notify = false;
-  // lock scope
+
+  if (&p == g.tradingBuyer || &p == g.tradingSeller)
+    notify = true;
+  else
   {
-    lock_guard<mutex> lock(g.tradeMutex);
-    if (&p == g.tradingBuyer || &p == g.tradingSeller)
-      notify = true;
-    else
+    Player *buyer, *seller;
+    if (g.GetNextBuyerAndSeller(&buyer, &seller))
     {
-      Player *buyer, *seller;
-      if (g.GetNextBuyerAndSeller(&buyer, &seller))
-      {
-        if (&p == buyer || &p == seller)
-          notify = true;
-      }
+      if (&p == buyer || &p == seller)
+        notify = true;
     }
   }
+
+  lock.unlock();
 
   if (notify)
     g.tradeCond.notify_all();
