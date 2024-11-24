@@ -33,9 +33,9 @@ struct Game
 
   /* /\ these 2 need the same list of members \/ */
 
-  Game(const Game &g) : month(month), name(name), players(players), 
-    colony(colony), state(state), mules(mules), mulePrice(mulePrice),
-    resPrice(resPrice), landlotdata(landlotdata) {}
+  Game(const Game &g) : month(g.month), name(g.name), players(g.players), 
+    colony(g.colony), state(g.state), mules(g.mules), mulePrice(g.mulePrice),
+    resPrice(g.resPrice), landlotdata(g.landlotdata) {}
 
   List<LandLotData> landlotdata;
   List<int> possibleColonyEvents = {-1,0,1,2,3,4,5,6,7,0,1,2,3,4,5,6,7,0,1,2,3,-1};
