@@ -216,6 +216,7 @@ void Game::AdvanceToNextState()
         for (Player& p : players)
         {
           p.buying = (p.color != Y);
+          p.currentBid = (p.buying ? BUY : SELL);
         }
         break;              // but not implemented yet
     }
@@ -562,10 +563,6 @@ int Game::AuctionID()
 
 void Game::Start()
 {
-  void TradeThread(Game *game_ptr, int auctionID);
-  tradeThread = thread(TradeThread, this, AuctionID());
-  tradeThread.detach();
-  
   List<LandLotID> availMoundPlots;
   List<LandLotID> availHCPlots;
 
@@ -625,7 +622,7 @@ void Game::Start()
 
   state = SRankings;
 
-   StartNextMonth();
+  StartNextMonth();
 }
 
 void Game::EndAuction()
