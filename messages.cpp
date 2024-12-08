@@ -126,6 +126,7 @@ void UpdateBidReq::Recv(Player& p, Game& g)
 
   for (Player& p : g.players)
   {
+    if (p.ws == nullptr) continue;
     if (p.buying && p.currentBid > st.highestBid)
     {
       //printf("buying = %d, currentBid = %d, setting highestBID\n", p.buying, p.currentBid);

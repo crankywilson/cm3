@@ -212,12 +212,13 @@ void Game::AdvanceToNextState()
         state = SDevelop;  // need to do land auction and 
         break;             // events, but not implemented yet
       case SDevelop:
-        state = SAuction;   // need tp do events
+        state = SAuction;   // need to do events
         for (Player& p : players)
         {
           p.buying = (p.color != Y);
           p.currentBid = (p.buying ? BUY : SELL);
         }
+        StartAuction();
         break;              // but not implemented yet
     }
 
@@ -553,7 +554,35 @@ void Game::SendPlayerEvents()
 
 bool Game::GetNextBuyerAndSeller(Player **buyer, Player **seller)
 {
-  return false;
+  Player *highBuy = nullptr;
+  Player *lowSell = nullptr;
+
+  for (Player &p : players)
+  {
+    if (p.ws == nullptr) continue;
+    if (p.buying)
+    {
+      if (highBuy == nullptr) highBuy = &p;
+      else if (p.currentBid > highBuy->currentBid)
+        highBuy = &p;
+      else if (p.currentBid == highBuy->currentBid && p.rank < highBuy->rank)
+         highBuy = &p;
+    }
+    else // p is selling
+    {
+      if (lowSell == nullptr) lowSell = &p;
+      else if (p.currentBid < lowSell->currentBid)
+        lowSell = &p;
+      else if (p.currentBid == lowSell->currentBid && p.rank < lowSell->rank)
+         lowSell = &p;
+    }
+  }
+
+  *buyer = highBuy;
+  *seller = lowSell;
+
+  return highBuy != nullptr && lowSell != nullptr && 
+          highBuy->currentBid == lowSell->currentBid;
 }
 
 int Game::AuctionID()
@@ -623,6 +652,28 @@ void Game::Start()
   state = SRankings;
 
   StartNextMonth();
+
+  // shortcut
+  state = SAuction;   // need to do events
+
+        for (Player& p : players)
+        {
+          p.buying = (p.color != Y);
+          p.currentBid = (p.buying ? BUY : SELL);
+        }
+    
+    StartAuction();
+
+    send(AdvanceState{newState:state});
+}
+
+void Game::StartAuction()
+{
+  auctionTime = 10000;
+  auctionType = ORE;
+  void TradeThread(Game *game_ptr, int auctionID);
+  tradeThread = thread(TradeThread, this, AuctionID());
+  tradeThread.detach();
 }
 
 void Game::EndAuction()
@@ -719,6 +770,8 @@ void Upg(HttpResponse<false> *res, HttpRequest *req, struct us_socket_context_t 
   );
 }
 
+Loop* appLoop = nullptr;
+
 void RunWSServer(int port)
 {
   App app;
@@ -732,6 +785,7 @@ void RunWSServer(int port)
     .close = ConnectionClosed
    }
   );
+  appLoop = app.getLoop();
   app.listen(port, Listening);
   app.run();
 }

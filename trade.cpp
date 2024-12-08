@@ -5,6 +5,8 @@ using namespace std::chrono;
 
 typedef time_point<high_resolution_clock> timepoint;
 
+extern uWS::Loop* appLoop;
+
 struct TradeData
 {
   Game& g;
@@ -32,6 +34,15 @@ inline bool Continue(TradeData& t)
   return t.g.AuctionID() == t.auctionID && t.g.auctionTime > 0;
 }
 
+template <class T> void SendMsg(Game* g, const T msg)
+{
+  appLoop->defer([=]{ g->send(msg); });
+}
+
+template <class T> void SendMsg(Player* p, const T msg)
+{
+  appLoop->defer([=]{ p->send(msg); });
+}
 
 bool GetConfirms(TradeData& t)
 {
@@ -74,8 +85,10 @@ void TradeUnits(TradeData& t)
     t.g.tradeConfirmID++;
     buyer->confirmed = false;
     seller->confirmed = false;
-    buyer->send(ConfirmTrade{});
-    seller->send(ConfirmTrade{});
+
+    ConfirmTrade confirm{};
+    SendMsg(buyer, confirm);
+    SendMsg(seller, confirm);
 
     if (GetConfirms(t))
     {
@@ -114,9 +127,26 @@ void TradeUnits(TradeData& t)
 
 struct SetActiveTrading
 {
-  Game &g;
-  SetActiveTrading(Game& g) : g(g) { g.activeTrading = true; }
-  ~SetActiveTrading() { g.activeTrading = false; }
+  TradeData td;
+  
+  SetActiveTrading(TradeData& p) : td(p) 
+  { 
+    p.g.activeTrading = true; 
+
+    Color buyColor = p.g.tradingBuyer ? p.g.tradingBuyer->color : N;
+    Color sellColor = p.g.tradingSeller ? p.g.tradingSeller->color : N;
+    
+    SendMsg(&(p.g), StartTradeMsg{buyer:buyColor, seller:sellColor});
+  }
+
+  ~SetActiveTrading() 
+  { 
+    td.g.activeTrading = false;
+    td.g.tradingBuyer = nullptr;
+    td.g.tradingSeller = nullptr;
+
+    SendMsg(&(td.g), EndTradeMsg{});
+  } 
 };
 
 void StartTrade(TradeData &t)
@@ -125,7 +155,17 @@ void StartTrade(TradeData &t)
   int delay = 200;
   timepoint waituntil = millis(delay);
 
-  SetActiveTrading scope(t.g);  // sets t.g.activeTrading = true (and false on function return)
+  Player *buyer = nullptr, *seller = nullptr;
+  if (!t.g.GetNextBuyerAndSeller(&buyer, &seller))
+    return;
+
+  Player *thisBuyer = buyer;
+  Player *thisSeller = seller;
+
+  t.g.tradingBuyer = buyer;
+  t.g.tradingSeller = seller;
+
+  SetActiveTrading scope(t);  // sets t.g.activeTrading = true (and false on function return)
 
   while (now() < waituntil && Continue(t))
     t.g.tradeCond.wait_until(t.lk, waituntil);
@@ -133,17 +173,13 @@ void StartTrade(TradeData &t)
   if (!Continue(t))
     return;
 
-  Player *buyer = nullptr, *seller = nullptr;
   if (!t.g.GetNextBuyerAndSeller(&buyer, &seller))
     return;
 
-  t.g.tradingBuyer = buyer;
-  t.g.tradingSeller = seller;
+  if (buyer != thisBuyer) return;
+  if (seller != thisSeller) return;
 
   TradeUnits(t);
-
-  t.g.tradingBuyer = nullptr;
-  t.g.tradingSeller = nullptr;
 }
 
 

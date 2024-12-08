@@ -96,6 +96,7 @@ struct Game
   }
 
   void AdvanceToNextState();
+  void StartAuction();
   void EndAuction();
   int  AuctionID();
 

@@ -337,3 +337,16 @@ struct ConfirmTrade : BinMsg<ConfirmTrade>, BiDir
   
  BIN_REG(ConfirmTrade, 34)
 };
+
+struct StartTradeMsg : BinMsg<StartTradeMsg>, ServToCli
+{
+  Color buyer;
+  Color seller;
+  
+ BIN_REG_NORECV(StartTradeMsg, 35)
+};
+
+struct EndTradeMsg : BinMsg<EndTradeMsg>, ServToCli
+{
+ BIN_REG_NORECV(EndTradeMsg, 36)
+};
