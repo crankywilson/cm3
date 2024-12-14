@@ -112,18 +112,18 @@ void ReqLot::Recv(Player& p, Game& g)
 
 void UpdateBidReq::Recv(Player& p, Game& g)
 {
-  unique_lock lock(g.tradeMutex);
-
   p.currentBid = bid;  // no error checking yet
+  g.tradeMovement = true;
 
   CurrentAuctionState st;
-  st.highestBid = g.minBid;
-  st.lowestAsk = g.minBid + 35;
+  st.highestBid = BUY;
+  st.lowestAsk = SELL;
   st.R = g.player(R).currentBid;
   st.Y = g.player(Y).currentBid;
   st.G = g.player(G).currentBid;
   st.B = g.player(B).currentBid;
 
+  // determine highestBid and lowestAsk
   for (Player& p : g.players)
   {
     if (p.ws == nullptr) continue;
@@ -141,26 +141,24 @@ void UpdateBidReq::Recv(Player& p, Game& g)
 
   g.send(st);
 
-  g.tradeMovement = true;
+  if (g.activeTradingPrice > 0)
+  {
+    if (g.tradingBuyer->currentBid != g.activeTradingPrice || 
+        g.tradingSeller->currentBid != g.activeTradingPrice)
+    {
+      g.EndExistingTrade();   // sets g.activeTradingPrice == 0
+    }
+    
+  }
 
-  bool notify = false;
-
-  if (&p == g.tradingBuyer || &p == g.tradingSeller)
-    notify = true;
-  else
+  if (st.highestBid == st.lowestAsk && g.activeTradingPrice == 0)
   {
     Player *buyer, *seller;
     if (g.GetNextBuyerAndSeller(&buyer, &seller))
-    {
-      if (&p == buyer || &p == seller)
-        notify = true;
-    }
+      g.StartNewTrade(buyer, seller);
+    else
+      printf("something is bad here\n");
   }
-
-  lock.unlock();
-
-  if (notify)
-    g.tradeCond.notify_all();
 }
 
 void BuySell::Recv(Player& p, Game& g)
@@ -251,4 +249,8 @@ void Cantina::Recv(Player& p, Game& g)
 
 void ConfirmTrade::Recv(Player& p, Game& g)
 {
+  if (&p == g.tradingBuyer || &p == g.tradingSeller)
+  {
+    g.TradeConfirmed(tradeConfirmID, p);
+  }
 }

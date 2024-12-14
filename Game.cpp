@@ -660,6 +660,7 @@ void Game::Start()
         {
           p.buying = (p.color != Y);
           p.currentBid = (p.buying ? BUY : SELL);
+          p.res[ORE] = 3;
         }
     
     StartAuction();
@@ -669,11 +670,7 @@ void Game::Start()
 
 void Game::StartAuction()
 {
-  auctionTime = 10000;
   auctionType = ORE;
-  void TradeThread(Game *game_ptr, int auctionID);
-  tradeThread = thread(TradeThread, this, AuctionID());
-  tradeThread.detach();
 }
 
 void Game::EndAuction()
@@ -681,6 +678,120 @@ void Game::EndAuction()
   state = SAuctionOver;
 }
    
+void Game::EndExistingTrade()
+{
+  tradeConfirmID++;
+  activeTradingPrice = 0;
+  unitsTraded = 0;
+  tradingBuyer = nullptr;
+  tradingSeller = nullptr;
+  tradeCond.notify_all();  // kill tradeThread
+
+  send(EndTradeMsg{});
+}
+
+bool Game::StartNewTrade(Player *buyer, Player *seller)
+{
+  if (buyer->currentBid != seller->currentBid)
+    return false;
+
+  tradeConfirmID++;
+  activeTradingPrice = buyer->currentBid;
+  tradingBuyer = buyer;
+  tradingSeller = seller;
+  
+  void StartNewTrade(Game *g, int tradeConfirmID); 
+  tradeThread = std::thread(StartNewTrade, this, (int)tradeConfirmID);
+  tradeThread.detach();
+
+  send(StartTradeMsg{buyer:buyer->color, seller:seller->color});
+
+  return true;
+}
+
+void Game::StartTradeConfirmation(int confirmID)
+{
+  if (tradeConfirmID == confirmID && activeTradingPrice > 0 && 
+      tradingBuyer != nullptr && tradingSeller != nullptr)
+  {
+    ConfirmTrade confirm{tradeConfirmID:confirmID, price:activeTradingPrice};
+    tradingBuyer->send(confirm);
+    tradingSeller->send(confirm);
+   
+    void CancelIfConfirmNotReceived(Game *g, int tradeConfirmID);
+    tradeThread = std::thread(CancelIfConfirmNotReceived, this, (int)tradeConfirmID);
+    tradeThread.detach();
+  }
+}
+
+void Game::TradeConfirmed(int confirmID, Player &p)
+{
+  if (confirmID == tradeConfirmID)
+  {
+    p.confirmed = true;
+    if (tradingBuyer->confirmed && tradingSeller->confirmed)
+    {
+      tradeConfirmID++;
+      tradeCond.notify_all();  // kill tradeThread waiting for timeout
+
+      // ok actually do trade here and send msg
+      unitsTraded++;
+      send(UnitsTraded{n:unitsTraded});
+
+      if (tradingBuyer->money < activeTradingPrice)
+      {
+        tradingBuyer->currentBid = BUY;
+        send(EndTradeMsg{reason:NSF,player:tradingBuyer->color});
+        tradingBuyer = nullptr;
+      }
+
+      if (tradingSeller->res[auctionType] == 0)
+      {
+        tradingSeller->currentBid = SELL;
+        send(EndTradeMsg{reason:NSF,player:tradingBuyer->color});
+        tradingSeller = nullptr;
+      }
+
+      // if (tradingSeller->res[auctionType] == criticalAmount)
+      // send reason:CRITICAL
+
+      if (tradingBuyer == nullptr || tradingSeller == nullptr)
+      {
+        unitsTraded = 0;
+        if (!GetNextBuyerAndSeller(&tradingBuyer, &tradingSeller))
+        {
+          EndExistingTrade();
+          return;
+        }
+      }
+
+      StartNewTrade(tradingBuyer, tradingSeller);
+    }
+  }
+}
+
+void Game::TradeConfirmNotReceived(int confirmID)
+{
+  if (confirmID == tradeConfirmID)
+  {
+    EndExistingTrade();
+
+    if (!tradingBuyer->confirmed)
+    {
+      tradingBuyer->currentBid == BUY;
+      send(EndTradeMsg{reason:NOCONFIRM,player:tradingBuyer->color});
+    }
+    if (!tradingSeller->confirmed)
+    {
+      tradingSeller->currentBid == SELL;
+      send(EndTradeMsg{reason:NOCONFIRM,player:tradingBuyer->color});
+    }
+
+    Player *buyer, *seller;
+    if (GetNextBuyerAndSeller(&buyer, &seller))
+      StartNewTrade(buyer, seller);
+  }
+}
 
 int runningPort = -1;
 

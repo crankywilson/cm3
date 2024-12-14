@@ -331,7 +331,6 @@ struct Cantina : BinMsg<Cantina>, BiDir
 struct ConfirmTrade : BinMsg<ConfirmTrade>, BiDir
 {
   int tradeConfirmID;
-  ResType res;
   int price;
   bool accept;
   
@@ -346,7 +345,33 @@ struct StartTradeMsg : BinMsg<StartTradeMsg>, ServToCli
  BIN_REG_NORECV(StartTradeMsg, 35)
 };
 
+enum EndTradeReason
+{
+  BIDCHANGE = 0,
+  NOCONFIRM = 1,
+  NSF = 2,
+  CRITICAL = 3,
+  SOLDOUT = 4
+};
+
 struct EndTradeMsg : BinMsg<EndTradeMsg>, ServToCli
 {
+  int reason = 0;             
+  Color player = N;
+
  BIN_REG_NORECV(EndTradeMsg, 36)
+};
+
+struct UnitsTraded : BinMsg<UnitsTraded>, ServToCli
+{
+  int n;
+  int id;
+  Color buyer;
+  int newBuyerMoney;
+  int newBuyerUnits;
+  Color seller;
+  int newSellerMoney;
+  int newSellerUnits;
+  
+ BIN_REG_NORECV(UnitsTraded, 37)
 };

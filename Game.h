@@ -62,9 +62,9 @@ struct Game
   mutex               tradeMutex;
   condition_variable  tradeCond;              // when moving during auction, call notify on this to wake up tradeThread
   atomic_bool         tradeMovement = false;  // when moving during auction, set this to true which auctionTimerThread will periodically look at
-  atomic_bool         activeTrading = false;  // tradeThread updates this, auctionTimerThread reads from it and stops the clock while set
-  atomic_int32_t      auctionTime;
-  int                 tradeConfirmID = 0;
+  int                 activeTradingPrice = 0; // when > 0, indicates active trade...  auctionTimerThread reads from it and stops the clock while > 0
+  atomic_int32_t      tradeConfirmID = 0;     // usig atomic here to underscore this val can't be cached independently on CPU cores... probably not necessary...
+  int                 unitsTraded = 0;
   Player*             tradingBuyer  = nullptr; // read these in MessageHandler with tradeMutex ... only notify if tradingBuyer/tradingSeller moves or a potential buyer and seller meet
   Player*             tradingSeller = nullptr; // write these in tradeThread with mutex
 
@@ -99,6 +99,12 @@ struct Game
   void StartAuction();
   void EndAuction();
   int  AuctionID();
+  void EndExistingTrade();
+  bool StartNewTrade(Player *buyer, Player *seller);
+  void StartTradeConfirmation(int confirmID);  
+  void TradeConfirmed(int confirmID, Player& p);
+  void TradeConfirmNotReceived(int confirmID);
+
 
   private:
   int auctionType = NONE;

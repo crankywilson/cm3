@@ -5,31 +5,31 @@ using namespace std;
 using namespace std::chrono;
 
 
-inline bool Continue(Game& g, int auctionID)
+inline bool Continue(Game& g, int auctionID, int auctionTime)
 {
-  return g.AuctionID() == auctionID && g.auctionTime > 0;
+  return g.AuctionID() == auctionID && auctionTime > 0;
 }
 
 
 void TimerThread(Game *game_ptr, int auctionID)
 {
   Game& g = *game_ptr;
-  g.auctionTime = 10000;
+  int auctionTime = 10000;
 
   while (true)
   {
     g.tradeMovement = false;
     this_thread::sleep_for(std::chrono::milliseconds(250));
 
-    if (!Continue(g, auctionID))
+    if (!Continue(g, auctionID, auctionTime))
       break;
 
-    if (g.activeTrading) continue;
+    if (g.activeTradingPrice > 0) continue;
 
     if (g.tradeMovement) 
-      g.auctionTime -= 40;
+      auctionTime -= 40;
     else
-      g.auctionTime -= 250;
+      auctionTime -= 250;
   }
   
   g.tradeCond.notify_all();  // auction over
