@@ -68,6 +68,7 @@ enum GameState
   SProduction,
   SPostProduction,
   SPreAuction,
+  SAuctionIn3,
   SAuction,
   SAuctionOver,
   SEnd

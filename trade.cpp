@@ -48,9 +48,9 @@ void CancelIfConfirmNotReceived(Game *g, int tradeConfirmID)
 void StartNewTrade(Game *g, int tradeConfirmID)
 {
   unique_lock lk(g->tradeMutex);
-  int delay = 1250 - (100*g->unitsTraded);
+  int delay = 1250 - (200*g->unitsTraded);
   if (delay < 300)
-    delay = 300;
+    delay = 200;
 
   timepoint waituntil = millis(delay);
   while (now() < waituntil && g->tradeConfirmID == tradeConfirmID)

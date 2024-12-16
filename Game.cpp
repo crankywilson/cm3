@@ -196,6 +196,15 @@ void Game::StartNextMonth()
   
 }
 
+using namespace uWS;
+Loop* appLoop = nullptr;
+
+void StartAuctionIn3Secs(Game *g)
+{
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+  appLoop->defer([=]{g->AdvanceToNextState();});
+}
+
 void Game::AdvanceToNextState()
 {
   continueRecvd.clear();
@@ -212,14 +221,24 @@ void Game::AdvanceToNextState()
         state = SDevelop;  // need to do land auction and 
         break;             // events, but not implemented yet
       case SDevelop:
-        state = SAuction;   // need to do events
+        state = SPreAuction;   // need to do events
+        // need to send all the data about current auction
+        //  (type, how much was used and needed, etc.
         for (Player& p : players)
         {
           p.buying = (p.color != Y);
           p.currentBid = (p.buying ? BUY : SELL);
         }
-        StartAuction();
         break;              // but not implemented yet
+      case SPreAuction:
+        state = SAuctionIn3;
+        auctionTimerThread = thread(StartAuctionIn3Secs, this);
+        auctionTimerThread.detach();
+        break;
+      case SAuctionIn3:
+        state = SAuction;
+        StartAuction();
+        break;
     }
 
     send(AdvanceState{newState:state});
@@ -654,7 +673,7 @@ void Game::Start()
   StartNextMonth();
 
   // shortcut
-  state = SAuction;   // need to do events
+  state = SPreAuction;   // need to do events
 
         for (Player& p : players)
         {
@@ -663,7 +682,7 @@ void Game::Start()
           p.res[ORE] = 3;
         }
     
-    StartAuction();
+    //StartAuction();
 
     send(AdvanceState{newState:state});
 }
@@ -826,8 +845,6 @@ void NewConnection(WebSock *ws)
   games[0].NewConnection(ws, ip);
 }
 
-using namespace uWS;
-
 void Recv(WebSock *ws, MsgData msg, OpCode opCode)
 {
   const std::size_t intSize = sizeof(int);
@@ -880,8 +897,6 @@ void Upg(HttpResponse<false> *res, HttpRequest *req, struct us_socket_context_t 
     context
   );
 }
-
-Loop* appLoop = nullptr;
 
 void RunWSServer(int port)
 {

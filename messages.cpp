@@ -72,6 +72,7 @@ void StartGame::Recv(Player &p, Game &g)
 
 void PressedSpaceToContinue::Recv(Player &p, Game &g)
 {
+  color = p.color;
   g.send(*this);
   g.continueRecvd.insert(p.color);
   if (g.continueRecvd.size() == g.players.size())
@@ -163,6 +164,9 @@ void UpdateBidReq::Recv(Player& p, Game& g)
 
 void BuySell::Recv(Player& p, Game& g)
 {
+  color = p.color;
+  g.send(*this);
+  p.buying = buy;
 }
 
 void MuleBuyReq::Recv(Player& p, Game& g)
