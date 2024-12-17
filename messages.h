@@ -375,3 +375,35 @@ struct UnitsTraded : BinMsg<UnitsTraded>, ServToCli
   
  BIN_REG_NORECV(UnitsTraded, 37)
 };
+
+struct AuctionTime : BinMsg<AuctionTime>, ServToCli
+{
+  int pct;
+  
+ BIN_REG_NORECV(AuctionTime, 38)
+};
+
+struct AuctionStartPlayerData
+{
+  Color c;
+  short used;
+  short spoiled;
+  short produced;
+  short current;
+  short surplus;
+  short money;
+  bool  buying;
+
+  JS_OBJ(c,used,spoiled,produced,current,surplus,money,buying);
+};
+
+struct AuctionData : JSMsg<AuctionData>, CliToServ 
+{
+  short auctionType;
+  short colonyNumUnits;
+  short colonyBuyPrice;
+  List<AuctionStartPlayerData> playerData;
+
+ JS_OBJ(auctionType,colonyNumUnits,colonyBuyPrice,playerData);
+ JS_REG_NORECV(AuctionData, 39)
+};

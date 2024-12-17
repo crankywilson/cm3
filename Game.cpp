@@ -239,6 +239,9 @@ void Game::AdvanceToNextState()
         state = SAuction;
         StartAuction();
         break;
+      case SAuctionOver:
+        StartNextMonth();
+        break;
     }
 
     send(AdvanceState{newState:state});
@@ -672,6 +675,7 @@ void Game::Start()
 
   StartNextMonth();
 
+  //return;
   // shortcut
   state = SPreAuction;   // need to do events
 
@@ -690,13 +694,25 @@ void Game::Start()
 void Game::StartAuction()
 {
   auctionType = ORE;
+
+  void TimerThread(Game *game_ptr, int auctionID);
+  auctionTimerThread = thread(TimerThread, this, AuctionID());
+  auctionTimerThread.detach();
 }
 
 void Game::EndAuction()
 {
   state = SAuctionOver;
+  send(AdvanceState{newState:SAuctionOver});
+  appLoop->defer([=]{AdvanceStateIn3Secs();});
 }
    
+void Game::AdvanceStateIn3Secs()
+{
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+  AdvanceToNextState();
+}
+
 void Game::EndExistingTrade()
 {
   tradeConfirmID++;

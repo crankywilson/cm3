@@ -116,7 +116,7 @@ struct Game
   void UpdateResPrices();
   void SendPlayerEvents();
   int NumLots(Player p, int r);
-
+  void AdvanceStateIn3Secs();
 
 
   string pe[22] = {

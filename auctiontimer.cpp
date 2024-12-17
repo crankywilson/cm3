@@ -4,6 +4,7 @@
 using namespace std;
 using namespace std::chrono;
 
+extern uWS::Loop* appLoop;
 
 inline bool Continue(Game& g, int auctionID, int auctionTime)
 {
@@ -15,10 +16,15 @@ void TimerThread(Game *game_ptr, int auctionID)
 {
   Game& g = *game_ptr;
   int auctionTime = 10000;
+  int lastpct = 99;
 
   while (true)
   {
     g.tradeMovement = false;
+    int pct = auctionTime / 100;
+    if (pct < lastpct)
+      appLoop->defer([=]{game_ptr->send(AuctionTime{pct:pct});});
+
     this_thread::sleep_for(std::chrono::milliseconds(250));
 
     if (!Continue(g, auctionID, auctionTime))
@@ -32,6 +38,6 @@ void TimerThread(Game *game_ptr, int auctionID)
       auctionTime -= 250;
   }
   
-  g.tradeCond.notify_all();  // auction over
+  appLoop->defer([=]{game_ptr->EndAuction();});
 }
 
