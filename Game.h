@@ -96,6 +96,7 @@ struct Game
   }
 
   void AdvanceToNextState();
+  void PreAuction();
   void StartAuction();
   void EndAuction();
   int  AuctionID();
@@ -109,14 +110,15 @@ struct Game
   private:
   int auctionType = NONE;
   void DistributeCrystitie(LandLotID k, int lvl);
-  void StartNextMonth();
+  void StartNextMonth(bool sendState);
   void UpdateScores();
-  void UpdateGameState(GameState);
+  void UpdateGameState(GameState, bool);
   void BuildMules();
   void UpdateResPrices();
   void SendPlayerEvents();
-  int NumLots(Player p, int r);
+  int NumLots(Player& p, int r);
   void AdvanceStateIn3Secs();
+  int  Surplus(int resType, Player& p, bool nextMonth=false); 
 
 
   string pe[22] = {

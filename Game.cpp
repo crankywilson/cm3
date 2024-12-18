@@ -145,7 +145,7 @@ typedef void (*RecvFunc)(WebSock *, const MsgData);
 int Register(int id, RecvFunc fn, const char *className, bool json, int size);
 const int GameData::msgID = { Register(17, nullptr, "GameData", true, -1) };
 
-void Game::StartNextMonth()
+void Game::StartNextMonth(bool sendState)
 {
   month++;
 
@@ -188,12 +188,11 @@ void Game::StartNextMonth()
       if (colonyScore >= eti.first) scoreKey = eti.first;
 
     send(EndMsg{msg:et[scoreKey], score:colonyScore});
-    UpdateGameState(SEnd);
+    UpdateGameState(SEnd, sendState);
     return;
   }
 
-  UpdateGameState(SRankings);
-  
+  UpdateGameState(SRankings, sendState);
 }
 
 using namespace uWS;
@@ -224,12 +223,13 @@ void Game::AdvanceToNextState()
         state = SPreAuction;   // need to do events
         // need to send all the data about current auction
         //  (type, how much was used and needed, etc.
-        for (Player& p : players)
-        {
-          p.buying = (p.color != Y);
-          p.currentBid = (p.buying ? BUY : SELL);
-        }
+
         break;              // but not implemented yet
+      case SPostProduction:
+        state = SPreAuction;
+        auctionType = ORE;
+        PreAuction();
+        break;
       case SPreAuction:
         state = SAuctionIn3;
         auctionTimerThread = thread(StartAuctionIn3Secs, this);
@@ -240,7 +240,20 @@ void Game::AdvanceToNextState()
         StartAuction();
         break;
       case SAuctionOver:
-        StartNextMonth();
+        state = SPreAuction;
+        switch (auctionType)
+        {
+          case FOOD:   auctionType = ENERGY; break;
+          case ENERGY: auctionType = NONE;   break; 
+          case ORE:    auctionType = CRYS;   break;
+          case CRYS:   auctionType = FOOD;   break;
+        }
+
+        if (auctionType == NONE) 
+          StartNextMonth(false); /* <- updates state to SRankings */ 
+        else
+          PreAuction();
+
         break;
     }
 
@@ -283,19 +296,21 @@ void Game::UpdateScores()
 
 
 
-void Game::UpdateGameState(GameState gs)
+void Game::UpdateGameState(GameState gs, bool sendState)
 {
   state = gs;
 
-  struct UpdateGameState ugs{gs:gs};
-  send(ugs);
+  if (sendState)
+  {
+    struct UpdateGameState ugs{gs:gs};
+    send(ugs);
+  }
 
   if (gs == SPreDevelop)
   {
     auctionType = -1;
     SendPlayerEvents();    
   }  
-  
 }
 
 void Game::BuildMules()
@@ -380,7 +395,7 @@ string Replace(std::string& str, const std::string& from, const std::string& to)
     return str;
 }
 
-int Game::NumLots(Player p, int r)
+int Game::NumLots(Player& p, int r)
 {
   int n = 0;
   for (auto i : landlots)
@@ -673,28 +688,80 @@ void Game::Start()
 
   state = SRankings;
 
-  StartNextMonth();
+  StartNextMonth(false);  // probably change this to true when done with auction dev
 
-  //return;
-  // shortcut
-  state = SPreAuction;   // need to do events
+  state = SPostProduction;
 
-        for (Player& p : players)
-        {
-          p.buying = (p.color != Y);
-          p.currentBid = (p.buying ? BUY : SELL);
-          p.res[ORE] = 3;
-        }
+  for (Player& p : players)
+  {
+    p.res[ORE] = 3;
+  }
     
     //StartAuction();
 
-    send(AdvanceState{newState:state});
+    AdvanceToNextState();
+}
+
+int Game::Surplus(int resType, Player& p, bool nextMonth)
+{
+  int amt = p.res[resType];
+  int m = month;
+  if (nextMonth) m++;
+
+  if (resType == FOOD)
+  {
+    if (m < 5) amt -= 3;
+    else if (m < 9) amt -= 4;
+    else if (m < 13) amt -= 5;
+  }
+
+  if (resType == ENERGY)
+  {
+    for (auto &l : landlots)
+    {
+      if (l.second.owner == p.color && l.second.res > NONE && l.second.res != ENERGY)
+        amt--;
+    }
+    if (nextMonth)
+      amt--;
+  }
+
+  return amt;
+}
+
+void Game::PreAuction()
+{
+  AuctionData ad;
+  List<AuctionStartPlayerData> pdl;
+
+  for (Player& p : players)
+  {
+    if (p.ws == nullptr) continue;
+    AuctionStartPlayerData pd;
+    pd.c = p.color;
+    pd.current = p.res[auctionType];
+    pd.money = p.money;
+    pd.surplus = Surplus(auctionType, p, true);
+    pd.buying = pd.surplus <= 0;
+    pd.produced = p.produced[auctionType];
+    pd.spoiled = p.spoiled[auctionType];
+    pd.used = p.used[auctionType];
+    pdl.push_back(pd);
+
+    p.buying = pd.buying;
+    p.currentBid = (p.buying ? BUY : SELL);
+  }
+
+  ad.auctionType = auctionType;
+  ad.month = month;
+  ad.colonyBuyPrice = resPrice[auctionType];
+  ad.colonyNumUnits = colony.res[auctionType];
+  ad.playerData = pdl;
+  send(ad);
 }
 
 void Game::StartAuction()
 {
-  auctionType = ORE;
-
   void TimerThread(Game *game_ptr, int auctionID);
   auctionTimerThread = thread(TimerThread, this, AuctionID());
   auctionTimerThread.detach();
@@ -890,7 +957,7 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
 
   if (e.json) {
     LOGJSON(msgData + 4, msgSize - 4); }
-  else
+  else if (msgID != 38)
     LOGBIN(msgData, msgSize);
 
   e.recvFunc(ws, msg);

@@ -203,19 +203,6 @@ struct MuleBought : BinMsg<MuleBought>, ServToCli
  BIN_REG_NORECV(MuleBought, 21)
 };
 
-struct PreAuctionStat : BinMsg<PreAuctionStat>, ServToCli 
-{
-  Color color;
-  int start;
-  int used;
-  int spoiled;
-  int produced;
-  int current;
-  int surplus; 
-
- BIN_REG_NORECV(PreAuctionStat, 22)
-};
- 
 struct ModelRot : BinMsg<ModelRot>, BiDir 
 {
   Color color;
@@ -397,13 +384,14 @@ struct AuctionStartPlayerData
   JS_OBJ(c,used,spoiled,produced,current,surplus,money,buying);
 };
 
-struct AuctionData : JSMsg<AuctionData>, CliToServ 
+struct AuctionData : JSMsg<AuctionData>, ServToCli 
 {
   short auctionType;
+  short month;
   short colonyNumUnits;
   short colonyBuyPrice;
   List<AuctionStartPlayerData> playerData;
 
- JS_OBJ(auctionType,colonyNumUnits,colonyBuyPrice,playerData);
+ JS_OBJ(auctionType,month,colonyNumUnits,colonyBuyPrice,playerData);
  JS_REG_NORECV(AuctionData, 39)
 };

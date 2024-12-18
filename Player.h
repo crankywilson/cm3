@@ -32,10 +32,10 @@ struct Player
   bool buying;
   int currentBid = BUY;
   int plEvent;
-  int used[4];
-  int spoiled[4];
-  int startingRes[4];
-  int produced[4];
+  int used[4] = {0,0,0,0};
+  int spoiled[4] = {0,0,0,0};
+  int startingRes[4] = {0,0,0,0};
+  int produced[4] = {0,0,0,0};
   bool energyShort;
   bool confirmed;
 };
