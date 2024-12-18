@@ -206,7 +206,7 @@ const int SELL = 9999;
   printf("%s}\n", json); \
   ((char*)json)[size-1] = '}'; \
  }
- #define LOGBIN(data, size) { \
+ #define LOGBIN(data, size) if (msgID != 38) { \
   for (int di=0; di<size; di++) printf("%02x", data[di]); \
   printf("  "); \
   for (int di=0; di<size; di++) printf("%d,", data[di]); \

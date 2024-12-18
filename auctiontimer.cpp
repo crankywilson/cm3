@@ -23,7 +23,11 @@ void TimerThread(Game *game_ptr, int auctionID)
     g.tradeMovement = false;
     int pct = auctionTime / 100;
     if (pct < lastpct)
-      appLoop->defer([=]{game_ptr->send(AuctionTime{pct:pct});});
+      appLoop->defer([=]
+      {
+        if (game_ptr->AuctionID() == auctionID)
+          game_ptr->send(AuctionTime{pct:pct});
+      });
 
     this_thread::sleep_for(std::chrono::milliseconds(250));
 
@@ -38,6 +42,7 @@ void TimerThread(Game *game_ptr, int auctionID)
       auctionTime -= 250;
   }
   
-  appLoop->defer([=]{game_ptr->EndAuction();});
+  if (g.AuctionID() == auctionID)
+    appLoop->defer([=]{game_ptr->EndAuction(auctionID);});
 }
 

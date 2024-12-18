@@ -145,10 +145,6 @@ struct BuySell : BinMsg<BuySell>, BiDir
   Color color;
   bool buy;
 
-  void Recv()
-  {
-  }
-
  BIN_REG(BuySell, 14)
 };
 
@@ -351,14 +347,15 @@ struct EndTradeMsg : BinMsg<EndTradeMsg>, ServToCli
 
 struct UnitsTraded : BinMsg<UnitsTraded>, ServToCli
 {
-  int n;
-  int id;
   Color buyer;
-  int newBuyerMoney;
-  int newBuyerUnits;
   Color seller;
-  int newSellerMoney;
-  int newSellerUnits;
+  short unitsTraded;
+  short newBuyerMoney;
+  short newBuyerUnits;
+  short newSellerMoney;
+  short newSellerUnits;
+  short buyersurplus;
+  short sellersurplus;
   
  BIN_REG_NORECV(UnitsTraded, 37)
 };
@@ -394,4 +391,9 @@ struct AuctionData : JSMsg<AuctionData>, ServToCli
 
  JS_OBJ(auctionType,month,colonyNumUnits,colonyBuyPrice,playerData);
  JS_REG_NORECV(AuctionData, 39)
+};
+
+struct ForceAdvanceState : BinMsg<ForceAdvanceState>, CliToServ
+{
+ BIN_REG(ForceAdvanceState, 40)
 };

@@ -258,3 +258,8 @@ void ConfirmTrade::Recv(Player& p, Game& g)
     g.TradeConfirmed(tradeConfirmID, p);
   }
 }
+
+void ForceAdvanceState::Recv(Player& p, Game& g)
+{
+  g.AdvanceToNextState();
+}

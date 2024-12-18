@@ -239,6 +239,7 @@ void Game::AdvanceToNextState()
         state = SAuction;
         StartAuction();
         break;
+      case SAuction:
       case SAuctionOver:
         state = SPreAuction;
         switch (auctionType)
@@ -767,15 +768,13 @@ void Game::StartAuction()
   auctionTimerThread.detach();
 }
 
-void Game::EndAuction()
+void Game::EndAuction(int auctionID)
 {
+  if (AuctionID() != auctionID)
+    return;
+
   state = SAuctionOver;
   send(AdvanceState{newState:SAuctionOver});
-  appLoop->defer([=]{AdvanceStateIn3Secs();});
-}
-   
-void Game::AdvanceStateIn3Secs()
-{
   std::this_thread::sleep_for(std::chrono::seconds(3));
   AdvanceToNextState();
 }
@@ -837,8 +836,25 @@ void Game::TradeConfirmed(int confirmID, Player &p)
       tradeCond.notify_all();  // kill tradeThread waiting for timeout
 
       // ok actually do trade here and send msg
+
       unitsTraded++;
-      send(UnitsTraded{n:unitsTraded});
+      tradingBuyer->money -= activeTradingPrice;
+      tradingSeller->money += activeTradingPrice;
+      tradingBuyer->res[auctionType]++;
+      tradingSeller->res[auctionType]--;
+
+      UnitsTraded ut;
+      ut.unitsTraded = unitsTraded;
+      ut.buyer = tradingBuyer->color;
+      ut.seller = tradingSeller->color;
+      ut.newBuyerMoney = tradingBuyer->money;
+      ut.newBuyerUnits = tradingBuyer->res[auctionType];
+      ut.newSellerMoney = tradingSeller->money;
+      ut.newSellerUnits = tradingSeller->res[auctionType];
+      ut.buyersurplus = Surplus(auctionType, *tradingBuyer);
+      ut.sellersurplus = Surplus(auctionType, *tradingSeller);
+  
+      send(ut);
 
       if (tradingBuyer->money < activeTradingPrice)
       {
@@ -850,12 +866,16 @@ void Game::TradeConfirmed(int confirmID, Player &p)
       if (tradingSeller->res[auctionType] == 0)
       {
         tradingSeller->currentBid = SELL;
-        send(EndTradeMsg{reason:NSF,player:tradingBuyer->color});
+        send(EndTradeMsg{reason:SOLDOUT,player:tradingBuyer->color});
         tradingSeller = nullptr;
       }
 
-      // if (tradingSeller->res[auctionType] == criticalAmount)
-      // send reason:CRITICAL
+      else if (Surplus(auctionType, *tradingSeller) == 0)
+      {
+        tradingSeller->currentBid = SELL;
+        send(EndTradeMsg{reason:CRITICAL,player:tradingBuyer->color});
+        tradingSeller = nullptr;
+      }
 
       if (tradingBuyer == nullptr || tradingSeller == nullptr)
       {

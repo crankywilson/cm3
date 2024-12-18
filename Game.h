@@ -98,7 +98,7 @@ struct Game
   void AdvanceToNextState();
   void PreAuction();
   void StartAuction();
-  void EndAuction();
+  void EndAuction(int auctionID);
   int  AuctionID();
   void EndExistingTrade();
   bool StartNewTrade(Player *buyer, Player *seller);
@@ -117,7 +117,6 @@ struct Game
   void UpdateResPrices();
   void SendPlayerEvents();
   int NumLots(Player& p, int r);
-  void AdvanceStateIn3Secs();
   int  Surplus(int resType, Player& p, bool nextMonth=false); 
 
 
