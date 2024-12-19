@@ -28,8 +28,8 @@ void CancelIfConfirmNotReceived(Game *g, int tradeConfirmID)
     return;
   }
 
-  buyer->confirmed = false;
-  seller->confirmed = false;
+  buyer->confirmed = buyer->color == C;
+  seller->confirmed = seller->color == C;
 
   int delay = 700;
   timepoint waituntil = millis(delay);

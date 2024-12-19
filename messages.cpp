@@ -21,6 +21,10 @@ void SendCurrentPlayers(Game &g)
 void JoinGameReq::Recv(Player &p, Game &g)
 {
   p.starter = g.players.size() == 1;
+
+  if (p.starter)
+    g.startedFromUnityEditor = devEditor;
+
   List<Color> avail = { R, Y, G, B };
   for (Player& other : g.players)
     remove(avail, other.color);
@@ -113,8 +117,11 @@ void ReqLot::Recv(Player& p, Game& g)
 
 void UpdateBidReq::Recv(Player& p, Game& g)
 {
-  p.currentBid = bid;  // no error checking yet
-  g.tradeMovement = true;
+  if (&p != &g.colony)  // special case to send data after trade end
+  {
+    p.currentBid = bid;  // no error checking yet
+    g.tradeMovement = true;
+  }
 
   CurrentAuctionState st;
   st.highestBid = BUY;
@@ -140,7 +147,25 @@ void UpdateBidReq::Recv(Player& p, Game& g)
     }
   }
 
+  if (st.highestBid == BUY &&
+      g.minBid == g.resPrice[g.auctionType])
+  {
+    st.highestBid = g.resPrice[g.auctionType];
+  }
+
+  if (st.lowestAsk == SELL && g.colony.res[g.auctionType] > 0 &&
+      g.minBid == g.resPrice[g.auctionType])
+  {
+    st.lowestAsk = 35 * g.minIncr + g.resPrice[g.auctionType];
+  }
+    
   g.send(st);
+
+  if (&p == &g.colony)  // special case to send data after trade end
+  {
+    return;  // don't start/end trade activities here...
+             // this case is just for sending the current state
+  }
 
   if (g.activeTradingPrice > 0)
   {

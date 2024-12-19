@@ -49,7 +49,8 @@ struct Game
   bool started = false;
   Player* starter = nullptr;
   bool active = true;
-
+  bool startedFromUnityEditor = false;
+  
   set<Color> continueRecvd;
 
   int minBid = 10;
@@ -67,6 +68,8 @@ struct Game
   int                 unitsTraded = 0;
   Player*             tradingBuyer  = nullptr; // read these in MessageHandler with tradeMutex ... only notify if tradingBuyer/tradingSeller moves or a potential buyer and seller meet
   Player*             tradingSeller = nullptr; // write these in tradeThread with mutex
+
+  int auctionType = NONE;
 
   bool GetNextBuyerAndSeller(Player **buyer, Player **seller);
 
@@ -108,7 +111,6 @@ struct Game
 
 
   private:
-  int auctionType = NONE;
   void DistributeCrystitie(LandLotID k, int lvl);
   void StartNextMonth(bool sendState);
   void UpdateScores();

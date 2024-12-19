@@ -231,6 +231,13 @@ void Game::AdvanceToNextState()
         PreAuction();
         break;
       case SPreAuction:
+        if (startedFromUnityEditor)
+        {
+          // skip 3 sec delay
+          state = SAuction;
+          StartAuction();
+          break;
+        }
         state = SAuctionIn3;
         auctionTimerThread = thread(StartAuctionIn3Secs, this);
         auctionTimerThread.detach();
@@ -616,6 +623,22 @@ bool Game::GetNextBuyerAndSeller(Player **buyer, Player **seller)
     }
   }
 
+  if (lowSell != nullptr && highBuy == nullptr &&
+      lowSell->currentBid == resPrice[auctionType])
+  {
+    highBuy = &colony;
+    colony.currentBid = lowSell->currentBid;
+  }
+
+  if (highBuy != nullptr && lowSell == nullptr &&
+      highBuy->currentBid == 35 * minIncr + resPrice[auctionType] &&
+      colony.res[auctionType] > 0 &&
+      minBid == resPrice[auctionType])
+  {
+    lowSell = &colony;
+    colony.currentBid = highBuy->currentBid;
+  }
+
   *buyer = highBuy;
   *seller = lowSell;
 
@@ -696,6 +719,7 @@ void Game::Start()
   for (Player& p : players)
   {
     p.res[ORE] = 3;
+    p.money = 100;
   }
     
     //StartAuction();
@@ -763,6 +787,8 @@ void Game::PreAuction()
 
 void Game::StartAuction()
 {
+  minIncr = auctionType >= CRYS ? 4 : 1;
+  minBid = resPrice[auctionType];
   void TimerThread(Game *game_ptr, int auctionID);
   auctionTimerThread = thread(TimerThread, this, AuctionID());
   auctionTimerThread.detach();
@@ -816,13 +842,23 @@ void Game::StartTradeConfirmation(int confirmID)
       tradingBuyer != nullptr && tradingSeller != nullptr)
   {
     ConfirmTrade confirm{tradeConfirmID:confirmID, price:activeTradingPrice};
-    tradingBuyer->send(confirm);
-    tradingSeller->send(confirm);
+
+    if (tradingBuyer->color != C)
+      tradingBuyer->send(confirm);
+  
+    if (tradingSeller->color != C)
+      tradingSeller->send(confirm);
    
     void CancelIfConfirmNotReceived(Game *g, int tradeConfirmID);
     tradeThread = std::thread(CancelIfConfirmNotReceived, this, (int)tradeConfirmID);
     tradeThread.detach();
   }
+}
+
+void SendCurrentAuctionState(Game *g)
+{
+  UpdateBidReq fake;
+  fake.Recv(g->colony, *g);
 }
 
 void Game::TradeConfirmed(int confirmID, Player &p)
@@ -866,14 +902,14 @@ void Game::TradeConfirmed(int confirmID, Player &p)
       if (tradingSeller->res[auctionType] == 0)
       {
         tradingSeller->currentBid = SELL;
-        send(EndTradeMsg{reason:SOLDOUT,player:tradingBuyer->color});
+        send(EndTradeMsg{reason:SOLDOUT,player:tradingSeller->color});
         tradingSeller = nullptr;
       }
 
       else if (Surplus(auctionType, *tradingSeller) == 0)
       {
         tradingSeller->currentBid = SELL;
-        send(EndTradeMsg{reason:CRITICAL,player:tradingBuyer->color});
+        send(EndTradeMsg{reason:CRITICAL,player:tradingSeller->color});
         tradingSeller = nullptr;
       }
 
@@ -883,6 +919,7 @@ void Game::TradeConfirmed(int confirmID, Player &p)
         if (!GetNextBuyerAndSeller(&tradingBuyer, &tradingSeller))
         {
           EndExistingTrade();
+          SendCurrentAuctionState(this);
           return;
         }
       }
@@ -896,20 +933,22 @@ void Game::TradeConfirmNotReceived(int confirmID)
 {
   if (confirmID == tradeConfirmID)
   {
-    EndExistingTrade();
+    Player* buyer = tradingBuyer;
+    Player* seller = tradingSeller;
 
-    if (!tradingBuyer->confirmed)
+    EndExistingTrade(); // sets tradingBuyer/Seller to null
+
+    if (!buyer->confirmed)
     {
-      tradingBuyer->currentBid == BUY;
-      send(EndTradeMsg{reason:NOCONFIRM,player:tradingBuyer->color});
+      buyer->currentBid == BUY;
+      send(EndTradeMsg{reason:NOCONFIRM,player:buyer->color});
     }
-    if (!tradingSeller->confirmed)
+    if (!seller->confirmed)
     {
-      tradingSeller->currentBid == SELL;
-      send(EndTradeMsg{reason:NOCONFIRM,player:tradingBuyer->color});
+      seller->currentBid == SELL;
+      send(EndTradeMsg{reason:NOCONFIRM,player:seller->color});
     }
 
-    Player *buyer, *seller;
     if (GetNextBuyerAndSeller(&buyer, &seller))
       StartNewTrade(buyer, seller);
   }

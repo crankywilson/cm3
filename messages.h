@@ -34,8 +34,9 @@ inline void NR(int msgID)
 struct JoinGameReq : JSMsg<JoinGameReq>, CliToServ 
 {
   string gameName;
-  
- JS_OBJ(gameName);
+  bool   devEditor;
+
+ JS_OBJ(gameName, devEditor);
  JS_REG(JoinGameReq, 1)
 };
 
