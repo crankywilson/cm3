@@ -198,9 +198,9 @@ void Game::StartNextMonth(bool sendState)
 using namespace uWS;
 Loop* appLoop = nullptr;
 
-void StartAuctionIn3Secs(Game *g)
+void StartAuctionIn2Secs(Game *g)
 {
-  std::this_thread::sleep_for(std::chrono::seconds(3));
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   appLoop->defer([=]{g->AdvanceToNextState();});
 }
 
@@ -221,6 +221,8 @@ void Game::AdvanceToNextState()
         break;             // events, but not implemented yet
       case SDevelop:
         state = SPreAuction;   // need to do events
+        auctionType = ORE;
+        PreAuction();
         // need to send all the data about current auction
         //  (type, how much was used and needed, etc.
 
@@ -239,7 +241,7 @@ void Game::AdvanceToNextState()
           break;
         }
         state = SAuctionIn3;
-        auctionTimerThread = thread(StartAuctionIn3Secs, this);
+        auctionTimerThread = thread(StartAuctionIn2Secs, this);
         auctionTimerThread.detach();
         break;
       case SAuctionIn3:
@@ -714,7 +716,15 @@ void Game::Start()
 
   state = SRankings;
 
-  StartNextMonth(false);  // probably change this to true when done with auction dev
+  // test setup:
+  auto& lt = landlots[LandLotID(1,1)];
+  lt.owner = R;
+  
+  StartNextMonth(true);  // set param to true when running game normally
+
+  /* This is how to go directly to auction for testing 
+  
+  (change StartNextMonth param to false ^)
 
   state = SPostProduction;
 
@@ -722,10 +732,9 @@ void Game::Start()
   {
     p.res[ORE] = 3;
   }
-    
-    //StartAuction();
 
-    AdvanceToNextState();
+  AdvanceToNextState();
+  /**/
 }
 
 int Game::Surplus(int resType, Player& p, bool nextMonth)
