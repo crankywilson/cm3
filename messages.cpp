@@ -126,7 +126,7 @@ int constrainToLowestSell(int bid, Game &g)
 
   if (lowest > 35 * g.minIncr + g.resPrice[g.auctionType])
     if (g.colony.res[g.auctionType] > 0)
-      lowest = g.minIncr + g.resPrice[g.auctionType];
+      lowest = 35 * g.minIncr + g.resPrice[g.auctionType];
 
   return min(bid, lowest);
 }
