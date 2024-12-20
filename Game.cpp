@@ -719,7 +719,6 @@ void Game::Start()
   for (Player& p : players)
   {
     p.res[ORE] = 3;
-    p.money = 100;
   }
     
     //StartAuction();
@@ -1046,7 +1045,7 @@ void RunWSServer(int port)
   runningPort = port;
   app.ws<PlayerRef>("/*", 
    {
-    .idleTimeout = 0,
+    .idleTimeout = 30,    // this in connection with sendPingsAutomatically (= true by default) seems to keep Chrome WS alive when idle/minimized (esp. on Windows)
     .upgrade = Upg,
     .open = NewConnection,
     .message = Recv,

@@ -115,10 +115,40 @@ void ReqLot::Recv(Player& p, Game& g)
   cont.Recv(p, g);
 }
 
+int constrainToLowestSell(int bid, Game &g)
+{
+  int lowest = SELL;
+  for (Player& p : g.players)
+  {
+    if (p.ws != nullptr && !p.buying)
+      lowest = min(lowest, p.currentBid);
+  }
+
+  if (lowest > 35 * g.minIncr + g.resPrice[g.auctionType])
+    if (g.colony.res[g.auctionType] > 0)
+      lowest = g.minIncr + g.resPrice[g.auctionType];
+
+  return min(bid, lowest);
+}
+
+int constrainToHighestBuy(int bid, Game &g)
+{
+  int highest = g.minBid;
+  for (Player& p : g.players)
+  {
+    if (p.ws != nullptr && p.buying)
+      highest = max(highest, p.currentBid);
+  }
+
+  return max(bid, highest);
+}
+
 void UpdateBidReq::Recv(Player& p, Game& g)
 {
   if (&p != &g.colony)  // special case to send data after trade end
   {
+    if (p.buying) bid = constrainToLowestSell(bid, g);
+    else bid = constrainToHighestBuy(bid, g);
     p.currentBid = bid;  // no error checking yet
     g.tradeMovement = true;
   }
@@ -192,6 +222,10 @@ void BuySell::Recv(Player& p, Game& g)
   color = p.color;
   g.send(*this);
   p.buying = buy;
+  if (buy)
+    p.currentBid = BUY;
+  else
+    p.currentBid = SELL;
 }
 
 void MuleBuyReq::Recv(Player& p, Game& g)
