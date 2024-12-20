@@ -99,13 +99,14 @@ struct UpdateBidReq : BinMsg<UpdateBidReq>, CliToServ
 
 struct CurrentAuctionState : BinMsg<CurrentAuctionState>, ServToCli
 {
-  int R;
-  int Y;
-  int G;
-  int B;
-  int lowestAsk;
-  int highestBid;
-
+  short R;
+  short Y;
+  short G;
+  short B;
+  short lowestAsk;
+  short highestBid;
+  short minBid;
+  
  BIN_REG_NORECV(CurrentAuctionState, 10)
 };
 

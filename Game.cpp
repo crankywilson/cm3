@@ -607,6 +607,7 @@ bool Game::GetNextBuyerAndSeller(Player **buyer, Player **seller)
     if (p.ws == nullptr) continue;
     if (p.buying)
     {
+      if (p.currentBid == BUY) continue;
       if (highBuy == nullptr) highBuy = &p;
       else if (p.currentBid > highBuy->currentBid)
         highBuy = &p;
@@ -615,6 +616,7 @@ bool Game::GetNextBuyerAndSeller(Player **buyer, Player **seller)
     }
     else // p is selling
     {
+      if (p.currentBid == SELL) continue;
       if (lowSell == nullptr) lowSell = &p;
       else if (p.currentBid < lowSell->currentBid)
         lowSell = &p;

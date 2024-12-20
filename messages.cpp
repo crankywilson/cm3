@@ -149,7 +149,7 @@ void UpdateBidReq::Recv(Player& p, Game& g)
   {
     if (p.buying) bid = constrainToLowestSell(bid, g);
     else bid = constrainToHighestBuy(bid, g);
-    p.currentBid = bid;  // no error checking yet
+    p.currentBid = bid;
     g.tradeMovement = true;
   }
 
@@ -188,7 +188,31 @@ void UpdateBidReq::Recv(Player& p, Game& g)
   {
     st.lowestAsk = 35 * g.minIncr + g.resPrice[g.auctionType];
   }
-    
+  
+  if (st.highestBid > g.minBid + (35 * g.minIncr))
+  {
+    g.minBid = st.highestBid - (35 * g.minIncr);
+    st.minBid = g.minBid;
+    for (Player& p : g.players)
+    {
+      if (p.currentBid < g.minBid && p.currentBid > BUY)
+      {
+        p.currentBid = p.buying ? BUY : g.minBid;
+        switch (p.color)
+        {
+          case R: st.R = p.currentBid; break;
+          case Y: st.Y = p.currentBid; break;
+          case G: st.G = p.currentBid; break;
+          case B: st.B = p.currentBid; break;
+        }
+      }
+    }
+  }
+  else
+  {
+    st.minBid = g.minBid;
+  }
+   
   g.send(st);
 
   if (&p == &g.colony)  // special case to send data after trade end
