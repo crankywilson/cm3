@@ -256,6 +256,7 @@ void Game::AdvanceAfterLandAuction()
   if (auctionLots.size() == 0)
   {
     auctionType = -1;
+    state = SDevelop;
     send(AdvanceState{newState:SDevelop});
     SendPlayerEvents();
   }
@@ -293,7 +294,7 @@ void Game::AdvanceToNextState()
         auctionTimerThread.detach();
         break;
       case SDevelop:
-        state = SPreAuction;   // need to do events
+        state = SPreAuction;
         auctionType = ORE;
         PreAuction();
         // need to send all the data about current auction
@@ -497,9 +498,6 @@ void Game::SendPlayerEvents()
       p.plEvent = PopRandom(possibleGoodPlayerEvents, *this);
     else if (r < badEventProb)
       p.plEvent = PopRandom(possibleBadPlayerEvents, *this);
-
-//dev test
-p.plEvent = 0;
 
     if (p.plEvent > -1)
       longMsg = pe[p.plEvent];
