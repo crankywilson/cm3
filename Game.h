@@ -111,6 +111,11 @@ struct Game
 
 
   private:
+  List<LandLotID> auctionLots;
+  LandLotID currentAuctionLot;
+  
+  void DetermineLandAuctions();
+  void AdvanceAfterLandAuction();
   void DistributeCrystitie(LandLotID k, int lvl);
   void StartNextMonth(bool sendState);
   void UpdateScores();

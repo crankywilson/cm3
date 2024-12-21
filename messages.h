@@ -399,3 +399,17 @@ struct ForceAdvanceState : BinMsg<ForceAdvanceState>, CliToServ
 {
  BIN_REG(ForceAdvanceState, 40)
 };
+
+struct NoLandAuctions : BinMsg<NoLandAuctions>, ServToCli
+{
+ BIN_REG_NORECV(NoLandAuctions, 41)
+};
+
+struct LotForSale : BinMsg<LotForSale>, ServToCli
+{
+  int e;
+  int n;
+ BIN_REG_NORECV(LotForSale, 42)
+};
+
+

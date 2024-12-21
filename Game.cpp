@@ -204,6 +204,70 @@ void StartAuctionIn2Secs(Game *g)
   appLoop->defer([=]{g->AdvanceToNextState();});
 }
 
+void Game::DetermineLandAuctions()
+{
+  int r = rand() % 100;
+  int numToAuction = 0;
+  if (r > 93)
+    numToAuction = 3;
+  else if (r > 69)
+    numToAuction = 2;
+  else if (r > 31)
+    numToAuction = 1;
+
+numToAuction=1;
+  vector<LandLotID> possible;
+  possible.reserve(40);
+
+  for (auto i : landlots)
+  {
+    if (i.second.owner >= C && !(i.first.e == 0 && i.first.n == 0))
+      possible.push_back(i.first);
+  }
+
+  if (possible.size() < numToAuction)
+    numToAuction = possible.size();
+
+  while (numToAuction > 0)
+  {
+    auctionLots.push_back(possible[rand() % possible.size()]);
+    numToAuction--;
+  }
+
+  if (auctionLots.size() == 0)
+  {
+    send(NoLandAuctions{});
+    appLoop->defer([=]
+    {
+      this_thread::sleep_for(chrono::seconds(3));
+      AdvanceAfterLandAuction();
+    }
+    );
+  }
+  else
+  {
+    currentAuctionLot = *(auctionLots.end()-1);
+    auctionLots.pop_back();
+    send(LotForSale{e:currentAuctionLot.e, n:currentAuctionLot.n});
+  }
+}
+
+void Game::AdvanceAfterLandAuction()
+{
+  if (auctionLots.size() == 0)
+  {
+    send(AdvanceState{newState:SDevelop});
+    SendPlayerEvents();
+  }
+  else
+  {
+    currentAuctionLot = *(auctionLots.end()-1);
+    auctionLots.pop_back();
+    send(LotForSale{e:currentAuctionLot.e, n:currentAuctionLot.n});
+  }
+}
+
+
 void Game::AdvanceToNextState()
 {
   continueRecvd.clear();
@@ -217,8 +281,16 @@ void Game::AdvanceToNextState()
             p.send(LotGrantResp{e:0,n:0,granted:false,playerColor:p.color}); 
         break;
       case SLandGrant:
-        state = SDevelop;  // need to do land auction and 
-        break;             // events, but not implemented yet
+        DetermineLandAuctions();
+        state = SLandAuctionShowLot;
+        break;
+      case SLandAuctionShowLot:
+        auctionType = LAND;
+        state = SAuctionIn3;
+        PreAuction();
+        auctionTimerThread = thread(StartAuctionIn2Secs, this);
+        auctionTimerThread.detach();
+        break;
       case SDevelop:
         state = SPreAuction;   // need to do events
         auctionType = ORE;
@@ -257,6 +329,7 @@ void Game::AdvanceToNextState()
           case ENERGY: auctionType = NONE;   break; 
           case ORE:    auctionType = CRYS;   break;
           case CRYS:   auctionType = FOOD;   break;
+          case LAND: { AdvanceAfterLandAuction(); return; }
         }
 
         if (auctionType == NONE) 
@@ -315,12 +388,6 @@ void Game::UpdateGameState(GameState gs, bool sendState)
     struct UpdateGameState ugs{gs:gs};
     send(ugs);
   }
-
-  if (gs == SPreDevelop)
-  {
-    auctionType = -1;
-    SendPlayerEvents();    
-  }  
 }
 
 void Game::BuildMules()
@@ -627,20 +694,23 @@ bool Game::GetNextBuyerAndSeller(Player **buyer, Player **seller)
     }
   }
 
-  if (lowSell != nullptr && highBuy == nullptr &&
-      lowSell->currentBid == resPrice[auctionType])
+  if (auctionType != LAND)
   {
-    highBuy = &colony;
-    colony.currentBid = lowSell->currentBid;
-  }
+    if (lowSell != nullptr && highBuy == nullptr &&
+        lowSell->currentBid == resPrice[auctionType])
+    {
+      highBuy = &colony;
+      colony.currentBid = lowSell->currentBid;
+    }
 
-  if (highBuy != nullptr && lowSell == nullptr &&
-      highBuy->currentBid == 35 * minIncr + resPrice[auctionType] &&
-      colony.res[auctionType] > 0 &&
-      minBid == resPrice[auctionType])
-  {
-    lowSell = &colony;
-    colony.currentBid = highBuy->currentBid;
+    if (highBuy != nullptr && lowSell == nullptr &&
+        highBuy->currentBid == 35 * minIncr + resPrice[auctionType] &&
+        colony.res[auctionType] > 0 &&
+        minBid == resPrice[auctionType])
+    {
+      lowSell = &colony;
+      colony.currentBid = highBuy->currentBid;
+    }
   }
 
   *buyer = highBuy;
@@ -716,17 +786,18 @@ void Game::Start()
 
   state = SRankings;
 
-  // test setup:
-  auto& lt = landlots[LandLotID(1,1)];
-  lt.owner = R;
-  
+landlots[LandLotID(1,1)].owner = R;
+landlots[LandLotID(2,1)].owner = R;
+
   StartNextMonth(true);  // set param to true when running game normally
 
   /* This is how to go directly to auction for testing 
   
   (change StartNextMonth param to false ^)
-
-  state = SPostProduction;
+*/
+  // test setup:
+  
+/*
 
   for (Player& p : players)
   {
@@ -739,6 +810,8 @@ void Game::Start()
 
 int Game::Surplus(int resType, Player& p, bool nextMonth)
 {
+  if (resType == LAND) return 0;
+
   int amt = p.res[resType];
   int m = month;
   if (nextMonth) m++;
@@ -776,11 +849,18 @@ void Game::PreAuction()
     pd.c = p.color;
     pd.current = p.res[auctionType];
     pd.money = p.money;
-    pd.surplus = Surplus(auctionType, p, true);
-    pd.buying = pd.surplus <= 0;
-    pd.produced = p.produced[auctionType];
-    pd.spoiled = p.spoiled[auctionType];
-    pd.used = p.used[auctionType];
+
+    if (auctionType == LAND)
+      pd.buying = true;
+    else
+    {
+      pd.surplus = Surplus(auctionType, p, true);
+      pd.buying = pd.surplus <= 0;
+      pd.produced = p.produced[auctionType];
+      pd.spoiled = p.spoiled[auctionType];
+      pd.used = p.used[auctionType];
+    }
+
     pdl.push_back(pd);
 
     p.buying = pd.buying;
@@ -789,8 +869,17 @@ void Game::PreAuction()
 
   ad.auctionType = auctionType;
   ad.month = month;
-  ad.colonyBuyPrice = resPrice[auctionType];
-  ad.colonyNumUnits = colony.res[auctionType];
+
+  if (auctionType == LAND)
+  {
+    ad.colonyBuyPrice = 500;
+    ad.colonyNumUnits = 0;
+  }
+  else
+  {
+    ad.colonyBuyPrice = resPrice[auctionType];
+    ad.colonyNumUnits = colony.res[auctionType];
+  }
   ad.playerData = pdl;
   send(ad);
 }
@@ -804,10 +893,40 @@ void Game::StartAuction()
   auctionTimerThread.detach();
 }
 
+int NumRLots(map<LandLotID,
+      LandLot>    &landlots)
+{
+  int count = 0;
+  for (auto i:landlots)
+  {
+    if (i.second.owner == R) count++;
+  }
+  return count;
+}
+
 void Game::EndAuction(int auctionID)
 {
   if (AuctionID() != auctionID)
     return;
+
+  if (auctionType == LAND)
+  {
+    if (!currentAuctionLot.IsCenter())
+    {
+      Player *buyer, *unused;
+      GetNextBuyerAndSeller(&buyer, &unused);
+      if (buyer != nullptr)
+      {
+        buyer->money -= buyer->currentBid;
+        landlots[currentAuctionLot].owner = buyer->color;
+        landlotdata.clear();
+        for (auto i : landlots)
+          landlotdata.push_back({i.first.e, i.first.n, i.second});
+        send(GameData{gd:*this});
+      }
+      currentAuctionLot.SetCenter();
+    }
+  }
 
   state = SAuctionOver;
   send(AdvanceState{newState:SAuctionOver});

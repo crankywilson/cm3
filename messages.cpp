@@ -76,6 +76,7 @@ void StartGame::Recv(Player &p, Game &g)
 
 void PressedSpaceToContinue::Recv(Player &p, Game &g)
 {
+  if (g.continueRecvd.count(p.color) > 0) return;
   color = p.color;
   g.send(*this);
   g.continueRecvd.insert(p.color);
@@ -177,13 +178,14 @@ void UpdateBidReq::Recv(Player& p, Game& g)
     }
   }
 
-  if (st.highestBid == BUY &&
+  if (st.highestBid == BUY && g.auctionType != LAND &&
       g.minBid == g.resPrice[g.auctionType])
   {
     st.highestBid = g.resPrice[g.auctionType];
   }
 
-  if (st.lowestAsk == SELL && g.colony.res[g.auctionType] > 0 &&
+  if (st.lowestAsk == SELL && g.auctionType != LAND && 
+      g.colony.res[g.auctionType] > 0 &&
       g.minBid == g.resPrice[g.auctionType])
   {
     st.lowestAsk = 35 * g.minIncr + g.resPrice[g.auctionType];

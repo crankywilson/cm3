@@ -62,7 +62,6 @@ enum GameState
   SLandGrant,
   SLandAuctionShowLot,
   SLandAuction,
-  SPreDevelop,
   SDevelop,
   SPreProduction,
   SProduction,
@@ -155,6 +154,10 @@ struct LandLotID
    return ret;
   }
   LandLotID(int ep, int np) : e(ep), n(np) {}
+  LandLotID() : e(0), n(0) {}
+  bool IsCenter() { return e == 0 && n == 0; }
+  void SetCenter() { e = 0; n = 0; }
+
  JS_OBJ(e, n);
 };
 
