@@ -346,5 +346,12 @@ void ConfirmTrade::Recv(Player& p, Game& g)
 
 void ForceAdvanceState::Recv(Player& p, Game& g)
 {
+  int existingAuctionType = g.auctionType;
+  // let's try to kill the auction timer
+  g.auctionType = -1;
+  g.tradeCond.notify_all();
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  
+  g.auctionType = existingAuctionType;
   g.AdvanceToNextState();
 }

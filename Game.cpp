@@ -215,7 +215,6 @@ void Game::DetermineLandAuctions()
   else if (r > 31)
     numToAuction = 1;
 
-numToAuction=1;
   vector<LandLotID> possible;
   possible.reserve(40);
 
@@ -239,7 +238,7 @@ numToAuction=1;
     send(NoLandAuctions{});
     appLoop->defer([=]
     {
-      this_thread::sleep_for(chrono::seconds(3));
+      this_thread::sleep_for(chrono::milliseconds(2500));
       AdvanceAfterLandAuction();
     }
     );
@@ -256,6 +255,7 @@ void Game::AdvanceAfterLandAuction()
 {
   if (auctionLots.size() == 0)
   {
+    auctionType = -1;
     send(AdvanceState{newState:SDevelop});
     SendPlayerEvents();
   }
@@ -264,6 +264,7 @@ void Game::AdvanceAfterLandAuction()
     currentAuctionLot = *(auctionLots.end()-1);
     auctionLots.pop_back();
     send(LotForSale{e:currentAuctionLot.e, n:currentAuctionLot.n});
+    send(AdvanceState{newState:SLandAuctionShowLot});
   }
 }
 
@@ -496,10 +497,12 @@ void Game::SendPlayerEvents()
       p.plEvent = PopRandom(possibleGoodPlayerEvents, *this);
     else if (r < badEventProb)
       p.plEvent = PopRandom(possibleBadPlayerEvents, *this);
-    else
-      continue;
 
-    longMsg = pe[p.plEvent];
+//dev test
+p.plEvent = 0;
+
+    if (p.plEvent > -1)
+      longMsg = pe[p.plEvent];
 
     switch (p.plEvent)
     {
@@ -663,6 +666,13 @@ void Game::SendPlayerEvents()
         lotKey: lotKey, addLot: addLot });
       p.send(PEventText { longMsg:longMsg, beneficial:p.plEvent < 13});
     }
+    else
+    {
+      send(PlayerEvent {color: p.color, money: p.money, shortMsg: "",
+        lotKey: "", addLot: false });
+      p.send(PEventText { longMsg:"", beneficial:true});
+    }
+    
   }
 }
 
