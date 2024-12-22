@@ -123,9 +123,9 @@ struct Game
   void BuildMules();
   void UpdateResPrices();
   void SendPlayerEvents();
-  int NumLots(Player& p, int r);
+  int  NumLots(Player& p, int r);
   int  Surplus(int resType, Player& p, bool nextMonth=false); 
-
+  void DoProduction();
 
   string pe[22] = {
 /*0*/"You just received a package from your home-world relatives containing 3 food and 2 energy units.",

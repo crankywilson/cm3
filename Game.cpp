@@ -816,6 +816,263 @@ landlots[LandLotID(2,1)].owner = R;
   /**/
 }
 
+  enum { NONRIVERLOT, FOODLOT, PRODUCINGLOT };
+
+  LandLotID RandomLotWithCondition(int cond, map<LandLotID, LandLot>& landlots)
+  {
+    List<LandLotID> candidates;
+    for (auto pair : landlots)
+    { 
+      if (cond == NONRIVERLOT) 
+        if (pair.first.e != 0) candidates.push_back(pair.first); 
+      else if (cond == FOODLOT)
+        if (pair.second.res == FOOD) candidates.push_back(pair.first); 
+      else if (cond == PRODUCINGLOT)
+        if (pair.second.res >= FOOD) candidates.push_back(pair.first); 
+    }
+
+    if (candidates.size() == 0) 
+      return LandLotID{};
+    else
+      return candidates[rand() % candidates.size()];
+  }
+
+  int AmountFoodNeeded(int month)
+  {
+    if (month >= 8)
+      return 5;
+    if (month >= 4)
+      return 4;
+    return 3;
+  }
+
+  int AmtEnergyNeeded(Player p, map<LandLotID,
+      LandLot>& landlots)
+  {
+    int amtEnergyNeeded = 0;
+    for (auto ll : landlots)
+    {
+      if (ll.second.owner != p.color) continue;
+      if (ll.second.res > -1 && ll.second.res != ENERGY)
+        amtEnergyNeeded++;
+    }
+
+    return amtEnergyNeeded;
+  }
+
+
+  bool sameLot(int e, int n, LandLot& ll, Game& g)
+  {
+    LandLotID k(e,n);
+    auto llcomp = g.landlots[k];
+    return llcomp.owner == ll.owner && llcomp.res == ll.res;
+  }
+
+  int GetProdValue(LandLotID k, LandLot ll, Game &g)
+  {
+    int v = 0;
+    switch (ll.res) {
+     case FOOD: if (k.e == 0) v = 4; else if (ll.mNum == 0) v = 2; else v = 1; break;
+     case ENERGY: if (k.e == 0) v = 2; else if (ll.mNum == 0) v = 3; else v = 1; break;
+     case ORE: v = ll.mNum + 1; break;
+     case CRYS: v = ll.crys; break;
+    }
+
+    if (sameLot(k.e+1, k.n, ll, g)) v += 1;
+    if (sameLot(k.e-1, k.n, ll, g)) v += 1;
+    if (sameLot(k.e, k.n+1, ll, g)) v += 1;
+    if (sameLot(k.e, k.n-1, ll, g)) v += 1;
+
+    int totalNumLotsOutfittedSame = 0;
+    for (auto i : g.landlots)
+      if (i.second.owner == ll.owner && i.second.res == ll.res)
+        totalNumLotsOutfittedSame++;
+    
+    v += totalNumLotsOutfittedSame/3;
+
+    int r = rand() % 7;
+    if (r == 0) v-=2;
+    if (r == 1) v-=1;
+    if (r == 5) v+=1;
+    if (r == 6) v+=2;
+
+    return v;
+  }
+
+  void Game::DoProduction()
+  {
+    const int QUAKE = 0;
+    const int PEST = 1;
+    const int SUNSPOT = 2;
+    const int RAIN = 3;
+    const int FIRE = 4;
+    const int ASTEROID = 5;
+    const int MULERAD = 6;
+    const int PIRATES = 7;
+    const int SHIPRETURN = 8;
+
+    List<LandLotID> lotsWithoutEnergy;
+    int amtFoodNeeded = AmountFoodNeeded(month);
+
+    for (Player& p : players)
+    {
+      for (int i=0; i<4; i++)
+        p.startingRes[i] = p.res[i];
+
+      p.used[FOOD] = min(amtFoodNeeded, p.res[FOOD]);
+      p.res[FOOD] -= p.used[FOOD];
+      p.spoiled[FOOD] = p.res[FOOD] / 2;
+      p.res[FOOD] -= p.spoiled[FOOD];
+
+      int amtEnergyNeeded = AmtEnergyNeeded(p, landlots);
+
+      if (p.energyShort)
+      {
+        List<LandLotID> nonEnergyLots;
+        
+        for (auto ll : landlots)
+        {
+          if (ll.second.owner == p.color &&
+              ll.second.res > -1 && 
+              ll.second.res != ENERGY)
+                nonEnergyLots.push_back(ll.first);
+        }
+
+        int shortage = amtEnergyNeeded - p.res[ENERGY];
+        while (shortage > 0 && nonEnergyLots.size() > 0)
+        {
+          int r = rand() % (nonEnergyLots.size());
+          LandLotID k = nonEnergyLots[r];
+          nonEnergyLots.erase(nonEnergyLots.begin() + r);
+          lotsWithoutEnergy.push_back(k);
+          shortage--;
+        }
+      }
+
+      p.used[ENERGY] = min(amtEnergyNeeded, p.res[ENERGY]);
+      p.res[ENERGY] -= p.used[ENERGY];
+      p.spoiled[ENERGY] = p.res[ENERGY] / 4;
+      p.res[ENERGY] -= p.spoiled[ENERGY];
+
+      p.spoiled[ORE] = p.res[ORE] < 50 ? 0 : p.res[ORE] - 50;
+      p.res[ORE] -= p.spoiled[ORE];
+
+      p.spoiled[CRYS] = p.res[CRYS] < 50 ? 0 : p.res[CRYS] - 50;
+      p.res[CRYS] -= p.spoiled[CRYS];
+
+      memset(p.produced, 0, sizeof(p.produced));
+    }
+
+    colonyEvent = PopRandom(possibleColonyEvents, *this);
+    if (month >= 12)
+      colonyEvent = SHIPRETURN;
+
+    string fullMsg = "";
+    LandLotID lotKey;
+
+    if (colonyEvent > -1)
+      fullMsg = ce[colonyEvent];
+    if (colonyEvent == PEST)
+      lotKey = RandomLotWithCondition(FOODLOT, landlots); // updates colonyEvent to -1 if needed...
+    else if (colonyEvent == MULERAD) 
+    {
+      lotKey = RandomLotWithCondition(PRODUCINGLOT,  landlots);
+      landlots[lotKey].res = -1;
+    }
+    else if (colonyEvent == ASTEROID)
+    {
+      lotKey = RandomLotWithCondition(NONRIVERLOT, landlots);
+      landlots[lotKey].res = -1;
+      landlots[lotKey].crys = 4;
+    }
+
+    if (colonyEvent == PEST || colonyEvent == MULERAD || 
+        colonyEvent == ASTEROID)
+    {
+      if (lotKey.IsCenter())
+      {
+        colonyEvent = -1;
+        fullMsg = "";
+      }
+    }
+
+    if (!lotKey.IsCenter())
+      fullMsg = fullMsg.replace(fullMsg.find("?"), 1, lotKey);
+
+
+    List<LandLotID> rkeys; // each element in here will be a production dot
+    for (auto pair : landlots)
+    {
+      auto k = pair.first;
+
+      if (find(lotsWithoutEnergy.begin(),
+               lotsWithoutEnergy.end(), k) != lotsWithoutEnergy.end())
+        continue;
+
+      
+      auto res = pair.second.res;
+      Color c = pair.second.owner;
+      if (c < C && res > -1)
+      {      
+        int numResProduced = GetProdValue(k, pair.second, *this);
+        if (colonyEvent == RAIN)
+        {
+          if (res == FOOD) numResProduced += 3;
+          if (res == ENERGY) numResProduced -= 2;
+        }
+        if (colonyEvent == SUNSPOT && res == ENERGY)
+        {
+          numResProduced += 3;
+        }
+        if (colonyEvent == QUAKE && (res == ORE || res == CRYS))
+        {
+          numResProduced /= 2;
+        }
+        if (numResProduced > 8) numResProduced = 8;
+        
+        for (int i=0; i<numResProduced; i++) 
+          rkeys.push_back(pair.first);
+
+        bool thisWasPestAttack = (colonyEvent == PEST) && (k == lotKey);
+        bool thisWasStolenCrys = (colonyEvent == PIRATES) && (res == CRYS);
+        
+        if (res >= 0 && !thisWasPestAttack && !thisWasStolenCrys)
+        {
+          Player& p = player(c);
+          p.produced[res] += numResProduced;
+          p.res[res] += numResProduced;
+        }
+      }
+    }
+
+    if (colonyEvent == PIRATES)
+    {
+      for (Player& p : players)
+      { 
+        p.startingRes[CRYS] = 0;
+        p.spoiled[CRYS] = 0;
+      }
+    }
+
+    if (colonyEvent == FIRE)
+    {
+      for (int i=0; i<5; i++) colony.res[i] = 0;
+    } 
+
+    random_shuffle ( rkeys.begin(), rkeys.end() );
+
+    bool beforeProd = colonyEvent == QUAKE ||
+                      colonyEvent == SUNSPOT ||
+                      colonyEvent == RAIN ||
+                      colonyEvent == ASTEROID ||
+                      colonyEvent == MULERAD;
+
+    send(ColonyEvent{colonyEvent:colonyEvent, fullMsg:fullMsg,  
+                      lotKey:lotKey, beforeProd:beforeProd});
+    send(Production{rkeys:rkeys});
+  }
+
+
 int Game::Surplus(int resType, Player& p, bool nextMonth)
 {
   if (resType == LAND) return 0;

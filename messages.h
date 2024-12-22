@@ -412,4 +412,23 @@ struct LotForSale : BinMsg<LotForSale>, ServToCli
  BIN_REG_NORECV(LotForSale, 42)
 };
 
+struct ColonyEvent : JSMsg<ColonyEvent>, ServToCli 
+{
+  int colonyEvent;
+  string fullMsg;
+  LandLotID lotKey;
+  bool beforeProd;
+ 
+ JS_OBJ(colonyEvent, fullMsg, lotKey, beforeProd);
+ JS_REG_NORECV(EndMsg, 43)
+};
+
+struct Production : JSMsg<JoinGameReq>, ServToCli 
+{
+  List<LandLotID> rkeys; 
+
+ JS_OBJ(rkeys);
+ JS_REG_NORECV(EndMsg, 44)
+};
+
 
