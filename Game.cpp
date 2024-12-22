@@ -156,14 +156,14 @@ void Game::StartNextMonth(bool sendState)
   List<string> resourceShortages;
   if (colony.res[FOOD] == 0) resourceShortages.push_back("food");
   if (colony.res[ENERGY] == 0) resourceShortages.push_back("energy");
-  if (colony.res[ORE] < 2) resourceShortages.push_back("smithore");
+  if (colony.res[ORE] < 2) resourceShortages.push_back("ore");
   if (resourceShortages.size() > 0 && month <= 12)
   {
     string resList = resourceShortages[0];
     if (resourceShortages.size() == 2)
       resList += " and " + resourceShortages[1];
     else if (resourceShortages.size() > 2)
-      resList = "food, energy, and smithore";
+      resList = "food, energy, and ore";
 
     send(ShortageMsg{msg:"The colony has a shortage of " + resList + "!"});
   }
@@ -294,14 +294,10 @@ void Game::AdvanceToNextState()
         auctionTimerThread.detach();
         break;
       case SDevelop:
-        state = SPreAuction;
-        auctionType = ORE;
-        PreAuction();
-        // need to send all the data about current auction
-        //  (type, how much was used and needed, etc.
-
-        break;              // but not implemented yet
-      case SPostProduction:
+        state = SProduction;
+        DoProduction();
+        break;
+      case SProduction:
         state = SPreAuction;
         auctionType = ORE;
         PreAuction();

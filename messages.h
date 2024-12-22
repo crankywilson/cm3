@@ -167,16 +167,7 @@ struct UpdateGameState : BinMsg<UpdateGameState>, ServToCli
 
 // GameData (msg 17) defined in Game.cpp
 
-class ColonyEvent : JSMsg<ColonyEvent>, ServToCli  
-{
-  string fullMsg;
-  int colonyEvent;
-  string lotKey;
-  bool beforeProd;
-
- JS_OBJ(fullMsg, colonyEvent, lotKey, beforeProd);
- JS_REG_NORECV(ColonyEvent, 18)
-};
+// msg 18 has become 43
 
 struct MulesAvail : BinMsg<MulesAvail>, ServToCli 
 {
@@ -420,7 +411,7 @@ struct ColonyEvent : JSMsg<ColonyEvent>, ServToCli
   bool beforeProd;
  
  JS_OBJ(colonyEvent, fullMsg, lotKey, beforeProd);
- JS_REG_NORECV(EndMsg, 43)
+ JS_REG_NORECV(ColonyEvent, 43)
 };
 
 struct Production : JSMsg<JoinGameReq>, ServToCli 
@@ -428,7 +419,7 @@ struct Production : JSMsg<JoinGameReq>, ServToCli
   List<LandLotID> rkeys; 
 
  JS_OBJ(rkeys);
- JS_REG_NORECV(EndMsg, 44)
+ JS_REG_NORECV(Production, 44)
 };
 
 
