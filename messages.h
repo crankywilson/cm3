@@ -414,7 +414,7 @@ struct ColonyEvent : JSMsg<ColonyEvent>, ServToCli
  JS_REG_NORECV(ColonyEvent, 43)
 };
 
-struct Production : JSMsg<JoinGameReq>, ServToCli 
+struct Production : JSMsg<Production>, ServToCli 
 {
   List<LandLotID> rkeys; 
 
