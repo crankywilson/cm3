@@ -161,7 +161,7 @@ struct Game
 /*2*/"Sunspot activity increases energy production!",                        // 15% 3 times max
 /*3*/"Acid rain increases food production, but decreases energy production.",// 15% 3 times max
 /*4*/"A fire at the settlement destroys all colony-held goods!",             // 10% 2 times max
-/*5*/"An asteroid smashes into lot ?٬ making a new crystite deposit!",       // 10% 2 times max
+/*5*/"An asteroid smashes into lot ?, making a new crystite deposit!",       // 10% 2 times max
 /*6*/"Space radiation destroys the MULE at lot ?!",                          // 10% 2 times max
 /*7*/"Space pirates steal all crystite!",                                    // 10% 2 times max
 /*8*/"A federation ship has returned to review the colony's performance"

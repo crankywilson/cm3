@@ -422,4 +422,21 @@ struct Production : JSMsg<Production>, ServToCli
  JS_REG_NORECV(Production, 44)
 };
 
+struct AssayReq : BinMsg<AssayReq>, CliToServ
+{
+  int e;
+  int n;
+
+ BIN_REG(AssayReq, 45)
+};
+
+struct AssayResult : BinMsg<AssayResult>, ServToCli
+{
+  int e;
+  int n;
+  int level;
+
+ BIN_REG_NORECV(AssayResult, 46)
+};
+
 

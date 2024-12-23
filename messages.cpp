@@ -355,3 +355,8 @@ void ForceAdvanceState::Recv(Player& p, Game& g)
   g.auctionType = existingAuctionType;
   g.AdvanceToNextState();
 }
+
+void AssayReq::Recv(Player& p, Game& g)
+{
+  g.send(AssayResult{e:e,n:n,level:g.landlots[{e,n}].crys});
+}

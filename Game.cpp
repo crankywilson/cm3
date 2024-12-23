@@ -1406,7 +1406,7 @@ void Recv(WebSock *ws, MsgData msg, OpCode opCode)
 
   if (e.json) {
     LOGJSON(msgData + 4, msgSize - 4); }
-  else if (msgID != 38)
+  else if (msgID != 38 && msgID != 23 && msgID != 24)
     LOGBIN(msgData, msgSize);
 
   e.recvFunc(ws, msg);

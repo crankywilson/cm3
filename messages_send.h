@@ -53,6 +53,7 @@ void Send(WebSock& ws, const T& msg)
     printf("R: %d, Y: %d, lowask: %d, highbid: %d\n", 
       cas.R, cas.Y, cas.lowestAsk, cas.highestBid);
   }
+  else if (msgID == ModelPos::msgID || msgID == ModelRot::msgID) {}
   else
     LOGBIN(((const char*)&msg), sizeof(T));
   }
