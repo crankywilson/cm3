@@ -360,3 +360,11 @@ void AssayReq::Recv(Player& p, Game& g)
 {
   g.send(AssayResult{e:e,n:n,level:g.landlots[{e,n}].crys});
 }
+
+void AuctionLotReq::Recv(Player& p, Game& g)
+{
+  if (find(g.auctionLots.begin(), g.auctionLots.end(), 
+      LandLotID(e,n)) == g.auctionLots.end())
+
+        g.auctionLots.push_back(LandLotID(e,n));
+}

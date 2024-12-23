@@ -109,9 +109,9 @@ struct Game
   void TradeConfirmed(int confirmID, Player& p);
   void TradeConfirmNotReceived(int confirmID);
 
+  List<LandLotID> auctionLots;
 
   private:
-  List<LandLotID> auctionLots;
   LandLotID currentAuctionLot;
   
   void DetermineLandAuctions();

@@ -1176,6 +1176,10 @@ void Game::EndAuction(int auctionID)
     {
       Player *buyer, *unused;
       GetNextBuyerAndSeller(&buyer, &unused);
+      Color existingOwner = landlots[currentAuctionLot].owner;
+      if (existingOwner < C)
+        player(existingOwner).money += buyer->currentBid;
+
       if (buyer != nullptr)
       {
         buyer->money -= buyer->currentBid;

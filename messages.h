@@ -439,4 +439,10 @@ struct AssayResult : BinMsg<AssayResult>, ServToCli
  BIN_REG_NORECV(AssayResult, 46)
 };
 
+struct AuctionLotReq : BinMsg<AuctionLotReq>, CliToServ
+{
+  int e;
+  int n;
 
+ BIN_REG(AuctionLotReq, 47)
+};
