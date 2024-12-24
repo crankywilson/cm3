@@ -125,6 +125,7 @@ struct Game
   void SendPlayerEvents();
   int  NumLots(Player& p, int r);
   int  Surplus(int resType, Player& p, bool nextMonth=false); 
+  void StartDevelopState();
   void DoProduction();
 
   string pe[22] = {

@@ -259,6 +259,7 @@ void Game::AdvanceAfterLandAuction()
     state = SDevelop;
     send(AdvanceState{newState:SDevelop});
     SendPlayerEvents();
+    StartDevelopState();
   }
   else
   {
@@ -476,6 +477,18 @@ int Game::NumLots(Player& p, int r)
   for (auto i : landlots)
     if (i.second.owner == p.color && i.second.res == r) n++;
   return n;
+}
+
+void Game::StartDevelopState()
+{
+  for (Player& p : players)
+  {
+    p.energyShort = Surplus(ENERGY, p) < 0;
+    if (p.ws != nullptr)
+    {
+      // send a message about food status
+    }
+  }
 }
 
 void Game::SendPlayerEvents()
@@ -1074,6 +1087,7 @@ int Game::Surplus(int resType, Player& p, bool nextMonth)
   if (resType == LAND) return 0;
 
   int amt = p.res[resType];
+  if (p.color == C) return amt;
   int m = month;
   if (nextMonth) m++;
 
@@ -1139,6 +1153,10 @@ void Game::PreAuction()
   else
   {
     ad.colonyBuyPrice = resPrice[auctionType];
+
+    if (auctionType == CRYS)
+      colony.res[CRYS] = 0;
+    
     ad.colonyNumUnits = colony.res[auctionType];
   }
   ad.playerData = pdl;
@@ -1281,8 +1299,8 @@ void Game::TradeConfirmed(int confirmID, Player &p)
       ut.newBuyerUnits = tradingBuyer->res[auctionType];
       ut.newSellerMoney = tradingSeller->money;
       ut.newSellerUnits = tradingSeller->res[auctionType];
-      ut.buyersurplus = Surplus(auctionType, *tradingBuyer);
-      ut.sellersurplus = Surplus(auctionType, *tradingSeller);
+      ut.buyersurplus = Surplus(auctionType, *tradingBuyer, true);
+      ut.sellersurplus = Surplus(auctionType, *tradingSeller, true);
   
       send(ut);
 
@@ -1300,7 +1318,7 @@ void Game::TradeConfirmed(int confirmID, Player &p)
         tradingSeller = nullptr;
       }
 
-      else if (Surplus(auctionType, *tradingSeller) == 0)
+      else if (tradingSeller->color != C && Surplus(auctionType, *tradingSeller, true) == 0)
       {
         tradingSeller->currentBid = SELL;
         send(EndTradeMsg{reason:CRITICAL,player:tradingSeller->color});
