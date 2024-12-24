@@ -217,6 +217,13 @@ void UpdateBidReq::Recv(Player& p, Game& g)
    
   g.send(st);
 
+  if (g.auctionType == LAND)
+  {
+    Player *buyer, *seller;
+    g.GetNextBuyerAndSeller(&buyer, &seller);
+    g.send(LandAuctionLeader{lead:buyer ? buyer->color : N});
+  }
+
   if (&p == &g.colony)  // special case to send data after trade end
   {
     return;  // don't start/end trade activities here...
@@ -367,4 +374,12 @@ void AuctionLotReq::Recv(Player& p, Game& g)
       LandLotID(e,n)) == g.auctionLots.end())
 
         g.auctionLots.push_back(LandLotID(e,n));
+}
+
+void DisableTimers::Recv(Player& p, Game& g)
+{
+  g.useTimers = !g.useTimers;
+  disable = !g.useTimers;
+
+  p.send(*this);
 }

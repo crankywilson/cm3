@@ -304,6 +304,7 @@ void Game::AdvanceToNextState()
         PreAuction();
         break;
       case SPreAuction:
+        if (SkipIfNoSellers()) return;
         if (startedFromUnityEditor)
         {
           // skip 3 sec delay
@@ -802,10 +803,7 @@ void Game::Start()
   started = true;
 
   state = SRankings;
-
-landlots[LandLotID(1,1)].owner = R;
-landlots[LandLotID(2,1)].owner = R;
-
+  
   StartNextMonth(true);  // set param to true when running game normally
 
   /* This is how to go directly to auction for testing 
@@ -1163,13 +1161,45 @@ void Game::PreAuction()
   send(ad);
 }
 
+bool Game::SkipIfNoSellers()
+{
+  if (auctionType < LAND)
+  {
+    if (colony.res[auctionType] == 0)
+    {
+      bool sellers = false;
+      for (Player& p : players)
+      {
+        if (!p.buying && p.ws != nullptr)
+          sellers = true;
+      }
+
+      if (!sellers)
+      {
+        state = SAuction;
+        send(NoSellerNoAuction{});
+        appLoop->defer([=]
+        {
+          this_thread::sleep_for(chrono::seconds(3));
+          AdvanceToNextState();
+        });
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void Game::StartAuction()
 {
   minIncr = auctionType >= CRYS ? 4 : 1;
   minBid = resPrice[auctionType];
-  void TimerThread(Game *game_ptr, int auctionID);
-  auctionTimerThread = thread(TimerThread, this, AuctionID());
-  auctionTimerThread.detach();
+  if (useTimers)
+  {
+    void TimerThread(Game *game_ptr, int auctionID);
+    auctionTimerThread = thread(TimerThread, this, AuctionID());
+    auctionTimerThread.detach();
+  }
 }
 
 int NumRLots(map<LandLotID,

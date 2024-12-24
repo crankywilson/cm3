@@ -446,3 +446,22 @@ struct AuctionLotReq : BinMsg<AuctionLotReq>, CliToServ
 
  BIN_REG(AuctionLotReq, 47)
 };
+
+struct DisableTimers : BinMsg<DisableTimers>, BiDir
+{
+  bool disable;            // not read by server, only used to 
+                           // communicate current state to client
+ BIN_REG(DisableTimers, 48)
+};
+
+struct LandAuctionLeader : BinMsg<LandAuctionLeader>, ServToCli
+{
+  Color lead;
+
+ BIN_REG_NORECV(LandAuctionLeader, 49)
+};
+
+struct NoSellerNoAuction : BinMsg<NoSellerNoAuction>, ServToCli
+{
+ BIN_REG_NORECV(NoSellerNoAuction, 50)
+};

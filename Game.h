@@ -47,6 +47,7 @@ struct Game
   int colonyEvent = -1;
 
   bool started = false;
+  bool useTimers = true;
   Player* starter = nullptr;
   bool active = true;
   bool startedFromUnityEditor = false;
@@ -116,6 +117,7 @@ struct Game
   
   void DetermineLandAuctions();
   void AdvanceAfterLandAuction();
+  bool SkipIfNoSellers();
   void DistributeCrystitie(LandLotID k, int lvl);
   void StartNextMonth(bool sendState);
   void UpdateScores();
