@@ -465,3 +465,11 @@ struct NoSellerNoAuction : BinMsg<NoSellerNoAuction>, ServToCli
 {
  BIN_REG_NORECV(NoSellerNoAuction, 50)
 };
+
+struct WumpusMsg : BinMsg<WumpusMsg>, BiDir
+{
+  Color c;
+  int newMoney;
+
+ BIN_REG(WumpusMsg, 51)
+};

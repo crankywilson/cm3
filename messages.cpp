@@ -383,3 +383,16 @@ void DisableTimers::Recv(Player& p, Game& g)
 
   p.send(*this);
 }
+
+void WumpusMsg::Recv(Player& p, Game& g)
+{
+  this->c = p.color;
+  int amt = 100;
+  if (g.month == 12) amt = 400;
+  else if (g.month >= 8) amt = 300;
+  else if (g.month >= 4) amt = 200;
+  p.money += amt;
+  this->newMoney = p.money;
+
+  g.send(*this);
+}
