@@ -109,7 +109,8 @@ struct Game
   void StartTradeConfirmation(int confirmID);  
   void TradeConfirmed(int confirmID, Player& p);
   void TradeConfirmNotReceived(int confirmID);
-
+  void CheckForRemainingLots();
+  
   List<LandLotID> auctionLots;
 
   private:
@@ -129,6 +130,7 @@ struct Game
   int  Surplus(int resType, Player& p, bool nextMonth=false); 
   void StartDevelopState();
   void DoProduction();
+  bool AnyRemainingUnownedLots();
 
   string pe[22] = {
 /*0*/"You just received a package from your home-world relatives containing 3 food and 2 energy units.",

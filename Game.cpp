@@ -253,7 +253,7 @@ void Game::DetermineLandAuctions()
 
 void Game::AdvanceAfterLandAuction()
 {
-  if (auctionLots.size() == 0)
+  if (auctionLots.size() == 0 || state == SLandGrantNoMoreLots)
   {
     auctionType = -1;
     state = SDevelop;
@@ -270,6 +270,34 @@ void Game::AdvanceAfterLandAuction()
   }
 }
 
+void Game::CheckForRemainingLots()
+{
+  if (!AnyRemainingUnownedLots())
+  {
+    continueRecvd.clear();
+    state = SLandGrantNoMoreLots;
+    send(AdvanceState{newState:SLandGrantNoMoreLots});
+    appLoop->defer([=]
+      {
+        this_thread::sleep_for(chrono::milliseconds(2500));
+        AdvanceAfterLandAuction();
+      });
+  }
+}
+
+bool Game::AnyRemainingUnownedLots()
+{
+  for (int e = -4; e <= 4; e++)
+  {
+    for (int n = -2; n <= 2; n++)
+    {
+      if (n == 0 && e == 0) continue;
+      if (landlots[LandLotID(e,n)].owner >= C)
+        return true;
+    }
+  }
+  return false;
+}
 
 void Game::AdvanceToNextState()
 {
@@ -278,7 +306,7 @@ void Game::AdvanceToNextState()
     switch (state)
     {
       case SRankings:
-        state = SLandGrant;
+        state = AnyRemainingUnownedLots() ? SLandGrant : SLandGrantNoMoreLots;
         for (Player& p : players)
           if (p.ws != nullptr)
             p.send(LotGrantResp{e:0,n:0,granted:false,playerColor:p.color}); 
@@ -341,6 +369,15 @@ void Game::AdvanceToNextState()
     }
 
     send(AdvanceState{newState:state});
+
+    if (state == SLandGrantNoMoreLots)
+    {
+      appLoop->defer([=]
+      {
+        this_thread::sleep_for(chrono::milliseconds(2500));
+        AdvanceAfterLandAuction();
+      });
+    }
 }
 
 void Game::UpdateScores()

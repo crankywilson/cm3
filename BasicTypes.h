@@ -60,6 +60,7 @@ enum GameState
   SSetup,
   SRankings,
   SLandGrant,
+  SLandGrantNoMoreLots,
   SLandAuctionShowLot,
   SLandAuction,
   SDevelop,

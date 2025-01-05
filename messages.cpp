@@ -114,6 +114,8 @@ void ReqLot::Recv(Player& p, Game& g)
   PressedSpaceToContinue cont;
   cont.color = p.color;
   cont.Recv(p, g);
+
+  g.CheckForRemainingLots();
 }
 
 int constrainToLowestSell(int bid, Game &g)
