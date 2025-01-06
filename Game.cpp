@@ -524,7 +524,7 @@ void Game::StartDevelopState()
     p.energyShort = Surplus(ENERGY, p) < 0;
     if (p.ws != nullptr)
     {
-      // send a message about food status
+      p.send(FoodAmt{units:p.res[FOOD]});
     }
   }
 }
@@ -842,6 +842,8 @@ void Game::Start()
   state = SRankings;
   
   StartNextMonth(true);  // set param to true when running game normally
+
+
 
   /* This is how to go directly to auction for testing 
   

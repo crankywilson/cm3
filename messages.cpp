@@ -115,7 +115,8 @@ void ReqLot::Recv(Player& p, Game& g)
   cont.color = p.color;
   cont.Recv(p, g);
 
-  g.CheckForRemainingLots();
+  if (g.continueRecvd.size() > 0)  // this gets set back to 0 from above call if we advanced...
+    g.CheckForRemainingLots();
 }
 
 int constrainToLowestSell(int bid, Game &g)
@@ -383,7 +384,7 @@ void DisableTimers::Recv(Player& p, Game& g)
   g.useTimers = !g.useTimers;
   disable = !g.useTimers;
 
-  p.send(*this);
+  g.send(*this);
 }
 
 void WumpusMsg::Recv(Player& p, Game& g)

@@ -473,3 +473,10 @@ struct WumpusMsg : BinMsg<WumpusMsg>, BiDir
 
  BIN_REG(WumpusMsg, 51)
 };
+
+struct FoodAmt : BinMsg<FoodAmt>, ServToCli
+{
+  int units;
+
+ BIN_REG(FoodAmt, 52)
+};
