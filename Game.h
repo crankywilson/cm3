@@ -131,6 +131,7 @@ struct Game
   void StartDevelopState();
   void DoProduction();
   bool AnyRemainingUnownedLots();
+  void SendGameData();
 
   string pe[22] = {
 /*0*/"You just received a package from your home-world relatives containing 3 food and 2 energy units.",

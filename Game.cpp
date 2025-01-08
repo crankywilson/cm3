@@ -208,7 +208,7 @@ void Game::DetermineLandAuctions()
 {
   int r = rand() % 100;
   int numToAuction = 0;
-  if (r > 93)
+  if (r > 93 && r < 97)
     numToAuction = 3;
   else if (r > 69)
     numToAuction = 2;
@@ -517,6 +517,15 @@ int Game::NumLots(Player& p, int r)
   return n;
 }
 
+void Game::SendGameData()
+{
+  landlotdata.clear();
+  for (auto i : landlots)
+    landlotdata.push_back({i.first.e, i.first.n, i.second});
+
+  send(GameData{gd:*this});
+}
+
 void Game::StartDevelopState()
 {
   for (Player& p : players)
@@ -625,7 +634,7 @@ void Game::SendPlayerEvents()
       case 12: {
         List<LandLotID> l;
         for (auto lli : landlots)
-          if (lli.second.owner == N) l.push_back(lli.first);
+          if (lli.second.owner == N && !lli.first.IsCenter()) l.push_back(lli.first);
         if (l.size() == 0) { p.plEvent = -1; continue; }
         auto k = l[rand() % l.size()];
         landlots[k].owner = p.color;
@@ -718,6 +727,7 @@ void Game::SendPlayerEvents()
       p.send(PEventText { longMsg:"", beneficial:true});
     }
     
+    SendGameData();
   }
 }
 
@@ -869,12 +879,21 @@ void Game::Start()
     List<LandLotID> candidates;
     for (auto pair : landlots)
     { 
-      if (cond == NONRIVERLOT) 
-        if (pair.first.e != 0) candidates.push_back(pair.first); 
-      else if (cond == FOODLOT)
-        if (pair.second.res == FOOD) candidates.push_back(pair.first); 
-      else if (cond == PRODUCINGLOT)
-        if (pair.second.res >= FOOD) candidates.push_back(pair.first); 
+      if (cond == (int)NONRIVERLOT) {
+        if (pair.first.e != 0)  {
+          candidates.push_back(pair.first);
+        }
+      } 
+      else if (cond == (int)FOODLOT) {
+        if (pair.second.res == FOOD) {
+          candidates.push_back(pair.first); 
+        }
+      }
+      else if (cond == (int)PRODUCINGLOT) {
+        if (pair.second.res >= FOOD) {
+          candidates.push_back(pair.first); 
+        }
+      }
     }
 
     if (candidates.size() == 0) 
@@ -1010,6 +1029,7 @@ void Game::Start()
     }
 
     colonyEvent = PopRandom(possibleColonyEvents, *this);
+
     if (month >= 12)
       colonyEvent = SHIPRETURN;
 
@@ -1115,6 +1135,7 @@ void Game::Start()
 
     send(ColonyEvent{colonyEvent:colonyEvent, fullMsg:fullMsg,  
                       lotKey:lotKey, beforeProd:beforeProd});
+    SendGameData();
     send(Production{rkeys:rkeys});
   }
 

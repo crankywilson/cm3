@@ -156,7 +156,7 @@ struct LandLotID
   bool operator==(const LandLotID o) const { return this->ind() == o.ind(); }
   LandLotID(int ep, int np) : e(ep), n(np) {}
   LandLotID() : e(0), n(0) {}
-  bool IsCenter() { return e == 0 && n == 0; }
+  bool IsCenter() const { return e == 0 && n == 0; } 
   void SetCenter() { e = 0; n = 0; }
 
  JS_OBJ(e, n);

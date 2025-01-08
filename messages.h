@@ -407,7 +407,7 @@ struct ColonyEvent : JSMsg<ColonyEvent>, ServToCli
 {
   int colonyEvent;
   string fullMsg;
-  LandLotID lotKey;
+  string lotKey;
   bool beforeProd;
  
  JS_OBJ(colonyEvent, fullMsg, lotKey, beforeProd);
@@ -478,5 +478,5 @@ struct FoodAmt : BinMsg<FoodAmt>, ServToCli
 {
   int units;
 
- BIN_REG(FoodAmt, 52)
+ BIN_REG_NORECV(FoodAmt, 52)
 };
