@@ -47,7 +47,7 @@ void Send(WebSock& ws, const T& msg)
   {
     ws.send(std::string_view((const char*)&msg, sizeof(T)));
 
-  if (msgID == CurrentAuctionState::msgID)
+  if (msgID == CurrentAuctionState::msgID && LOG_LEVEL > LOG_NOTHING)
   {
     CurrentAuctionState& cas = *(CurrentAuctionState*)&msg;
     printf("R: %d, Y: %d, lowask: %d, highbid: %d\n", 

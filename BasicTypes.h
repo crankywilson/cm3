@@ -202,7 +202,7 @@ const int SELL = 9999;
 #define LOG_ALLMSGS_NOTIMER 3
 #define LOG_EVERYTHING 4
 
-#define LOG_LEVEL LOG_NONMOVEMSGS_NOJSON
+#define LOG_LEVEL LOG_NOTHING
 
 #if LOG_LEVEL == LOG_EVERYTHING || LOG_LEVEL == LOG_ALLMSGS_NOTIMER
  #define LOGJSON(json, size) { \
@@ -230,6 +230,8 @@ const int SELL = 9999;
 #else
 #define LOGMSG(msgID, ...) printf(__VA_ARGS__)
 #endif
+
+inline void printnothing(...) {}
 
 #if LOG_LEVEL == LOG_NOTHING
 #define LOG printnothing
