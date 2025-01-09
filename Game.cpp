@@ -1206,7 +1206,7 @@ void Game::PreAuction()
 
   if (auctionType == LAND)
   {
-    ad.colonyBuyPrice = 500;
+    ad.colonyBuyPrice = lotStartBid;
     ad.colonyNumUnits = 0;
   }
   else
@@ -1297,6 +1297,15 @@ void Game::EndAuction(int auctionID)
         for (auto i : landlots)
           landlotdata.push_back({i.first.e, i.first.n, i.second});
         send(GameData{gd:*this});
+
+        lotStartBid += 50;
+        resPrice[LAND] = lotStartBid;
+      }
+      else
+      {
+        if (lotStartBid > 100);
+          lotStartBid -= 50;
+        resPrice[LAND] = lotStartBid;
       }
       currentAuctionLot.SetCenter();
     }

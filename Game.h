@@ -27,7 +27,7 @@ struct Game
   int             mules      = 14;
   int             mulePrice  = 100;
   vector<int>     resPrice   = { 15, 10, 40, 100, 500 };
-
+  int             lotStartBid = 500;
   JS_OBJ(month, name, players, colony, state, mules,
           mulePrice, resPrice, landlotdata);
 

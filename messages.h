@@ -300,7 +300,8 @@ struct Cantina : BinMsg<Cantina>, BiDir
   Color c;
   int winnings;
   int newMoney;
-
+  float timeLeft;
+  
  BIN_REG(Cantina, 33)
 };
 

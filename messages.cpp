@@ -339,8 +339,11 @@ void OutfitMule::Recv(Player& p, Game& g)
 
 void Cantina::Recv(Player& p, Game& g)
 {
+  int mult = (int)(g.month / 4);
   c = p.color;
-  winnings = 100;
+  winnings = 50;
+  winnings += 50 * mult;
+  winnings += (int)timeLeft;
   p.money += winnings;
   newMoney = p.money;
   g.send(*this);
