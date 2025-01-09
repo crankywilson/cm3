@@ -265,6 +265,7 @@ void Game::AdvanceAfterLandAuction()
   {
     currentAuctionLot = *(auctionLots.end()-1);
     auctionLots.pop_back();
+    state = SLandAuctionShowLot;
     send(LotForSale{e:currentAuctionLot.e, n:currentAuctionLot.n});
     send(AdvanceState{newState:SLandAuctionShowLot});
   }
